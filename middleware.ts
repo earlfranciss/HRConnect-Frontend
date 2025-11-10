@@ -1,32 +1,43 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("auth_token")?.value;
   const { pathname } = req.nextUrl;
+  const token = req.cookies.get("auth_token")?.value;
 
-  // ✅ If user visits the root path `/`, redirect immediately to /login
-  if (pathname === "/") {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+  console.log("Access Token", token);
+
+  const protectedPaths = ["/", "/chat"]; // all protected pages
+
+  // Protect pages
+  if (protectedPaths.some((path) => pathname.startsWith(path))) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    try {
+      jwt.verify(token, process.env.JWT_SECRET!);
+      return NextResponse.next();
+    } catch {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
   }
 
-  // ✅ If not authenticated and trying to access a protected route
-  if (!token && !pathname.startsWith("/login")) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+  // Redirect logged-in users away from /login
+  if (pathname.startsWith("/login") && token) {
+    try {
+      jwt.verify(token, process.env.JWT_SECRET!);
+      return NextResponse.redirect(new URL("/", req.url)); // already logged in → go to /
+    } catch {
+      return NextResponse.next();
+    }
   }
 
-  // ✅ If already authenticated but trying to access /login, redirect to dashboard or home
-  if (token && pathname.startsWith("/login")) {
-    const homeUrl = new URL("/dashboard", req.url); // change to `/` if you prefer
-    return NextResponse.redirect(homeUrl);
-  }
-
+  // Public pages
   return NextResponse.next();
 }
 
-// Apply middleware to all routes except static files and API routes
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
+  matcher: ["/:path*"],
 };
