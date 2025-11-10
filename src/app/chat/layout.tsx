@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Collapsible from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import {
   Home,
@@ -15,6 +16,9 @@ import {
   Trash2,
   MoreHorizontal,
   MessageCircle,
+  X,
+  Minus,
+  File,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -43,10 +47,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#FFEED6] ">
+    <div className="flex h-screen w-full bg-white">
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#435334] text-white p-4 space-y-6 border-r border-[#D8CBB0]">
-        <div className="text-2xl font-semibold text-center tracking-wide">
+      <aside className="hidden md:flex flex-col w-64 bg-gradient-to-b from-[#4AADB9] to-[#44B997] text-white  space-y-6 border-r border-[#D8CBB0]">
+        <div className="text-2xl font-semibold text-center tracking-wide p-4">
           <h1>
             HRConnect <span className="font-medium">Aiva</span>
           </h1>
@@ -57,11 +61,42 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             // handle new chat logic here
             console.log("Starting new chat...");
           }}
-          className="flex items-center gap-2 justify-center bg-[#39462C] text-white transition font-medium rounded-full py-6 cursor-pointer hover:bg-[#2c3e1a]"
+          className="flex justify-start gap-2 bg-[#F0F6FF] text-[#1B2559] text-sm transition font-medium rounded-lg p-6 mx-2 cursor-pointer hover:bg-[#D3E1F6]"
         >
           <Plus className="w-4 h-4" />
           New Chat
         </Button>
+
+        <div className="flex-1 overflow-y-auto space-y-6 p-2 text-sm">
+          <Collapsible title="Files">
+            <div className="flex items-center gap-2">
+              <File className="w-6 h-6"/>
+              <div className="flex flex-col">
+                <p className="text-sm text[#1B2559]">CompanyPolicy.pdf</p>
+                <p className="text-xs text-[#A3A9C7]">256.81 mb</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <File className="w-6 h-6"/>
+              <div className="flex flex-col">
+                <p className="text-sm text[#1B2559]">VacationLeave.docx</p>
+                <p className="text-xs text-[#A3A9C7]">64.4 mb</p>
+              </div>
+            </div>
+
+          </Collapsible>
+
+          <Collapsible title="Links" >
+
+            <p className="text-[#505674]">
+              workflow.com
+            </p>
+            <p className="text-[#505674]">
+              n-pax.com
+            </p>
+
+          </Collapsible>
+        </div>
 
         {/* <nav className="flex flex-col space-y-2">
           <Link
@@ -84,7 +119,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
         </nav> */}
 
-        <div className="flex-1 overflow-hidden">
+        {/* <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full pr-2">
             <div className="mt-4">
               <div className="flex items-center gap-2 text-gray-300 mb-2">
@@ -105,17 +140,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
           </ScrollArea>
-        </div>
+        </div> */}
 
         <div className="mt-auto">
-          <div className="flex justify-start items-center gap-4 hover:bg-[#2c3e1a] p-2 rounded-full transition cursor-pointer">
+          <div className="flex justify-start items-center gap-4 hover:bg-[#1B2559] p-2 m-2 rounded-lg transition cursor-pointer ">
             <Avatar>
               <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback>LM</AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-sm text-white">John Doe</h1>
-              <p className="text-xs text-gray-300">Free</p>
+              <h1 className="text-sm font-semibold text-white tracking-wide">Louell Grey Miones</h1>
+              <p className="text-xs text-gray-300">ERP - Software Engineer</p>
             </div>
             {/* <Button className="w-[140px] rounded-full text-white hover:bg-[#2c3e1a] bg-red-400">
               Logout
@@ -127,11 +162,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden ">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 bg-[#435334] border-b border-[#D8CBB0]">
+        <header className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#4AADB9] to-[#44B997] border-b border-[#D8CBB0]">
           <h1 className="text-lg font-semibold text-[#435334]"></h1>
 
-          <div className="flex items-center gap-2 text-center">
-            {/* Share Button */}
+          <div className="flex items-center gap-4 text-center">
+            <Minus className="text-white hover:text-red-500" />
+            <X className="text-white hover:text-red-500" />
+            {/* Share Button
             <Button
               onClick={handleShare}
               className=" bg-[#39462C] border-none text-white text-xs border rounded-full px-4 py-2 flex items-center gap-2 cursor-pointer"
@@ -140,7 +177,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               Share
             </Button>
 
-            {/* Ellipsis Dropdown */}
+            {/* Ellipsis Dropdown 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -159,15 +196,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   className="text-red-400 cursor-pointer hover:bg-transparent bg-transparent flex items-center gap-2 flex items-center justify-center w-full"
                 >
                   {/* <Trash2 className="h-4 w-4 text-red-400" />
-                  Delete */}
+                  Delete 
                 </Button>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </header>
 
         {/* Scrollable content */}
-        <ScrollArea className="flex-1 p-4 bg-[#FFEED6]">{children}</ScrollArea>
+        <ScrollArea className="flex-1 p-4">{children}</ScrollArea>
       </div>
     </div>
   );
