@@ -22,8 +22,8 @@ export default function LoginPage() {
         >
           <div className="text-left w-full">
             <h1 className="text-3xl font-semibold text-black">Welcome To.</h1>
-            <h2 className="text-5xl font-bold mt-1 text-[#435334]">
-              HRConnect <span className="font-thin">Aiva</span>
+            <h2 className="text-5xl font-bold mt-1 bg-linear-to-r from-[#44B997] to-[#4AADB9] bg-clip-text text-transparent">
+              HRConnect <span className="font-thin text-black">Aiva</span>
             </h2>
           </div>
 
@@ -39,7 +39,7 @@ export default function LoginPage() {
                   setFormData({ ...formData, email: e.target.value })
                 }
                 placeholder="example@email.com"
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none text-black border-gray-300"
+                className="w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300"
                 required
               />
             </div>
@@ -54,8 +54,8 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                placeholder="password"
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none text-black border-gray-300"
+                placeholder=""
+                className="w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300"
                 required
               />
             </div>
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-[#435334] text-white rounded-lg py-3 mt-6 cursor-pointer hover:bg-[#2c3e1a] transition-colors"
+            className="w-full bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-lg py-3 mt-6 cursor-pointer hover:bg-[#2c3e1a] transition-colors"
           >
             Login
           </button>
