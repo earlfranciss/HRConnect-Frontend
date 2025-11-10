@@ -2,14 +2,37 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Logging in:", formData);
-    // call your API or authentication logic here
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // prevent page reload
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      console.log(data);
+      if (res.ok) {
+        // Set cookie
+        document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax;`;
+
+        router.push("/");
+      } else {
+        console.error(data);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   };
 
   return (
@@ -17,7 +40,7 @@ export default function LoginPage() {
       {/* Left Section (Form) */}
       <div className="flex flex-col justify-center items-center md:w-[40%] w-full px-6 sm:px-10 lg:px-20 py-10">
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleLogin}
           className="w-full max-w-md flex flex-col items-center"
         >
           <div className="text-left w-full">
@@ -34,10 +57,8 @@ export default function LoginPage() {
               </label>
               <input
                 type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@email.com"
                 className="w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300"
                 required
@@ -50,10 +71,8 @@ export default function LoginPage() {
               </label>
               <input
                 type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder=""
                 className="w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300"
                 required

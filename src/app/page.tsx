@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,21 +12,47 @@ import {
 } from "@/components/ui/popover";
 
 import ChatWidget from "@/components/workflow/chat-widget";
+import LogoutButton from "@/components/logout/logout";
 
 export default function Home() {
   const [show, setShow] = useState(true);
+  const [message, setMessage] = useState("");
+  const [authChecked, setAuthChecked] = useState(false); // ✅ track auth check
+  const router = useRouter();
 
+  // -------------------------
+  // Guard: Check token before rendering page
+  // -------------------------
   useEffect(() => {
-    const timer = setTimeout(() => setShow(false), 5000); // Hide after 3s
+    const match = document.cookie.match(/(^|;) ?auth_token=([^;]*)/);
+    const token = match ? match[2] : null;
+
+    if (!token) {
+      router.replace("/login"); // redirect if no token
+    } else {
+      setAuthChecked(true); // token exists → allow page to render
+    }
+  }, [router]);
+
+  // -------------------------
+  // Hide welcome message after 5s
+  // -------------------------
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(false), 5000);
     return () => clearTimeout(timer);
   }, []);
-
-  const [message, setMessage] = useState("");
 
   const handleSend = () => {
     console.log("User message:", message);
     setMessage("");
   };
+
+  // -------------------------
+  // Wait for auth check before rendering page
+  // -------------------------
+  if (!authChecked) {
+    return null; // or a loading spinner if you want
+  }
 
   return (
     <main className="h-screen w-full bg-[#CCEEEE]">
@@ -40,13 +67,13 @@ export default function Home() {
             priority
           />
         </div>
+        <LogoutButton />
       </div>
 
       <div className="absolute bottom-0 right-0 w-[300px] h-[350px] flex flex-col items-end justify-end mr-5">
         <AnimatePresence>
           {show && (
             <>
-              {/* Message box */}
               <motion.div
                 id="first"
                 initial={{ opacity: 0, y: 30 }}
@@ -61,19 +88,6 @@ export default function Home() {
                   feel free to contact us.
                 </p>
               </motion.div>
-
-              {/* Chat button */}
-              {/* <motion.div
-                id="second"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 30 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="bg-linear-to-r from-[#44B997] to-[#4AADB9] rounded-full shadow-lg hover:shadow-xl 
-              text-lg text-white px-4 py-3 mb-2 w-full text-center cursor-pointer"
-              >
-                Chat with us
-              </motion.div> */}
             </>
           )}
         </AnimatePresence>
@@ -92,7 +106,7 @@ export default function Home() {
                   fill
                   alt="Chat Icon"
                   className="object-contain p-4"
-                />{" "}
+                />
               </Button>
             </PopoverTrigger>
             <PopoverContent
