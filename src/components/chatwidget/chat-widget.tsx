@@ -28,12 +28,18 @@ interface ChatWidgetProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   close: () => void; // function from parent
+  onExpand: () => void; // <-- new prop
+}
+
+interface ChatWidgetProps {
+  onExpand: () => void;
 }
 
 export default function ChatWidget({
   messages,
   setMessages,
   close,
+  onExpand,
 }: ChatWidgetProps) {
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -106,12 +112,12 @@ export default function ChatWidget({
 
         <div className="flex items-center gap-2">
           {/* Close Button */}
-          <Link
-            href="/chat"
+          <button
+            onClick={onExpand} // ✅ call parent handler
             className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
           >
             <SquareArrowOutUpRight size={18} className="cursor-pointer" />
-          </Link>
+          </button>
           <button
             className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
             onClick={close}
@@ -168,15 +174,15 @@ export default function ChatWidget({
                 }`}
               >
                 {msg.sender === "ai" && (
-                  <div className="flex-shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
                     <Bot className="text-[#44B997]" size={16} />
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words whitespace-pre-wrap ${
+                  className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm wrap-break-word whitespace-pre-wrap ${
                     msg.sender === "user"
-                      ? "bg-gradient-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
+                      ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
                       : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
                   }`}
                 >
@@ -192,7 +198,7 @@ export default function ChatWidget({
 
                 {msg.sender === "user" && (
                   <div className="w-8">
-                    <div className="flex-shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
+                    <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
                       <User className="text-[#44B997]" size={16} />
                     </div>
                   </div>
@@ -212,7 +218,7 @@ export default function ChatWidget({
           placeholder="Reply..."
           minRows={1}
           maxRows={6}
-          className="flex-1 mx-2 border-none bg-gray-100 rounded-xl resize-none focus-visible:ring-0 text-sm py-3 px-4 whitespace-pre-wrap break-words outline-0"
+          className="flex-1 mx-2 border-none bg-gray-100 rounded-xl resize-none focus-visible:ring-0 text-sm py-3 px-4 whitespace-pre-wrap wrap-break-word outline-0"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
