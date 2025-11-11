@@ -101,7 +101,8 @@ export default function ChatFullScreen({
 
         {/* Content */}
         {messages.length === 0 ? (
-          <CardContent className="flex-1 bg-gray-50 px-6 flex flex-col items-center justify-center text-center space-y-3">
+          <CardContent className="flex flex-col h-screen">
+            <div className="flex-1 bg-gray-50 px-6 flex flex-col items-center justify-center text-center space-y-3">
             <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
               <Bot className="text-white" size={32} />
             </div>
@@ -111,22 +112,32 @@ export default function ChatFullScreen({
             <p className="text-gray-500 text-sm mb-4">
               How can I help you today?
             </p>
-
-            <div className="space-y-2 w-full mt-2">
-              {[
-                "What are the benefits for regular employees?",
-                "How many vacation leave credits do I have left?",
-                "Did I have any late or missing logs this week?",
-              ].map((text, i) => (
-                <button
-                  key={i}
-                  className="w-full text-sm bg-white hover:bg-gray-100 border border-gray-200 rounded-full py-2 px-3 transition cursor-pointer"
-                  onClick={() => handleSuggestionClick(text)}
-                >
-                  {text}
-                </button>
-              ))}
             </div>
+
+
+           <div className="flex flex-wrap gap-2 w-full mt-2 px-14">
+  {
+[
+  "How can I update my personal information?",
+  "Can I view my payslips online?",
+  "What is the process for applying for sick leave?",
+  "Are there any upcoming company events?",
+  "How do I submit my timesheet for approval?",
+  "Who can I contact for IT support?"
+]
+
+  .map((text, i) => (
+    <button
+      key={i}
+      className="flex-1 min-w-[30%] max-w-[32%] text-sm bg-gray-100 hover:bg-white hover:border-[#4AADB9] border border-gray-200 rounded-lg py-2 px-3 transition cursor-pointer"
+      onClick={() => handleSuggestionClick(text)}
+    >
+      {text}
+    </button>
+  ))}
+</div>
+
+
           </CardContent>
         ) : (
           <CardContent
