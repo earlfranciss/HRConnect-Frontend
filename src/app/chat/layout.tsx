@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Collapsible from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+
 import {
   Home,
   MessageSquare,
@@ -49,7 +50,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-white">
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-gradient-to-b from-[#4AADB9] to-[#44B997] text-white  space-y-6 border-r border-[#D8CBB0]">
+      <aside className="hidden md:flex flex-col w-64 bg-gradient-to-b from-[#4AADB9] to-[#44B997] text-white  space-y-6 border-r border-[#D8CBB0] p-2">
         <div className="text-2xl font-semibold text-center tracking-wide p-4">
           <h1>
             HRConnect <span className="font-medium">Aiva</span>
@@ -58,7 +59,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         <Button
           onClick={() => {
-            // handle new chat logic here
             console.log("Starting new chat...");
           }}
           className="flex justify-start gap-2 bg-[#F0F6FF] text-[#1B2559] text-sm transition font-medium rounded-lg p-6 mx-2 cursor-pointer hover:bg-[#D3E1F6]"
@@ -166,40 +166,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <h1 className="text-lg font-semibold text-[#435334]"></h1>
 
           <div className="flex items-center gap-4 text-center">
+            {/* <Link
+            href="/"
+            className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
+          >
             <Minus className="text-white hover:text-red-500" />
+            </Link> */}
+            <Link
+            href="/"
+            className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
+          >
             <X className="text-white hover:text-red-500" />
-            {/* Share Button
-            <Button
-              onClick={handleShare}
-              className=" bg-[#39462C] border-none text-white text-xs border rounded-full px-4 py-2 flex items-center gap-2 cursor-pointer"
-            >
-              <Share2 className="h-4 w-4" />
-              Share
-            </Button>
-
-            {/* Ellipsis Dropdown 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon"
-                  className=" bg-[#39462C] text-white hover: bg-[#39462C]  rounded-full p-2 cursor-pointer border-black"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-[#39462C] rounded-full border-none"
-              >
-                <Button
-                  onClick={handleDelete}
-                  className="text-red-400 cursor-pointer hover:bg-transparent bg-transparent flex items-center gap-2 flex items-center justify-center w-full"
-                >
-                  {/* <Trash2 className="h-4 w-4 text-red-400" />
-                  Delete 
-                </Button>
-              </DropdownMenuContent>
-            </DropdownMenu> */}
+            </Link>
+           
           </div>
         </header>
 

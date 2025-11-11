@@ -99,7 +99,11 @@ export default function Home() {
               }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm"
             >
-              <ChatFullScreen close={() => setIsFullScreen(false)} />
+              <ChatFullScreen
+                messages={messages}
+                setMessages={setMessages}
+                close={() => setIsFullScreen(false)}
+              />
             </motion.div>
           ) : (
             // ✅ Smooth pop-up from bottom
