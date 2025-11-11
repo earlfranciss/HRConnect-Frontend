@@ -94,7 +94,7 @@ export default function Home() {
                 y: 50,
               }}
               transition={{
-                duration: 0.2, // 👈 1 second duration
+                duration: 0.3, // 👈 1 second duration
                 ease: "easeInOut", // 👈 smooth easing
               }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm"
@@ -109,10 +109,8 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
               transition={{
-                type: "spring",
-                stiffness: 180,
-                damping: 20,
-                duration: 0.2,
+                duration: 0.3, // 👈 1 second duration
+                ease: "easeInOut", // 👈 smooth easing
               }}
             >
               <Popover open={isOpen} onOpenChange={setIsOpen}>
