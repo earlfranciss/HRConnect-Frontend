@@ -1,36 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+````markdown
+# HRConnect Frontend
+
+This is the **frontend application** for HRConnect, an AI-powered HR assistant platform. The frontend is built using **Next.js 16**, **TypeScript**, **Tailwind CSS**, and **Framer Motion**. It provides an interactive chat interface for employees to interact with Aiva, the AI assistant.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Components](#components)
+- [Local Storage & Chat Persistence](#local-storage--chat-persistence)
+- [Development Notes](#development-notes)
+- [Future Enhancements](#future-enhancements)
+- [License](#license)
+
+---
+
+## Features
+
+- Interactive AI chat widget with suggestions
+- Fullscreen chat mode
+- Persistent chat using `localStorage`
+- Auto-scroll to latest messages
+- Responsive design for mobile and desktop
+- Animated message transitions with Framer Motion
+- Upload attachments
+- Action buttons for AI responses (like/dislike)
+- Timestamp display for each message
+
+---
+
+## Tech Stack
+
+- **Next.js 16** – React framework with Turbopack
+- **TypeScript** – Static typing
+- **Tailwind CSS** – Utility-first styling
+- **Framer Motion** – Animations
+- **Lucide Icons** – Icon library
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js >= 20.x
+- npm >= 9.x or yarn
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/earlfranciss/HRConnect-Frontend.git
+
+# Navigate into project
+cd HRConnect-Frontend
+
+# Install dependencies
+npm install
+# or
+yarn install
+````
+
+### Running the Development Server
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the frontend.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+├─ app/           # Next.js routes, pages, layout
+├─ components/    # Reusable UI components (ChatWidget, ChatFullScreen, Buttons, Cards)
+├─ hooks/         # Custom React hooks
+├─ lib/           # Utility functions and helpers
 
-To learn more about Next.js, take a look at the following resources:
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Components
 
-## Deploy on Vercel
+### ChatWidget
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+* Floating chat widget
+* Expand to fullscreen
+* Handles user input and suggestions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### ChatFullScreen
+
+* Fullscreen chat interface
+* Auto-scrolls to latest messages
+* Like/Dislike buttons for AI messages
+* Editable user messages 
+* Persistent chat storage with `localStorage`
+
+---
+
+## Local Storage & Chat Persistence
+
+* All chat messages are stored in `localStorage` under the key `"chatMessages"`.
+* Messages persist across page reloads.
+* New messages automatically scroll to the bottom of the chat.
+
+---
+
+## Development Notes
+
+* **Auto-scroll issues:** Ensure `ref` is applied to the correct scroll container. Use `useEffect` to scroll on `messages` change.
+* **Responsive layout:** Flex-wrap is used for suggestion buttons; avoid CSS grid to allow wrapping on narrow screens.
+* **Animations:** Framer Motion is used for message transitions. Use `AnimatePresence` for smooth exit animations.
+
+---
+
+## Future Enhancements
+
+* Integrate with backend API for real-time AI responses
+* Add authentication and employee profile data
+* Add file upload handling for attachments
+* Add dark mode support
+* Improve accessibility (ARIA roles, keyboard navigation)
+
+---
+
