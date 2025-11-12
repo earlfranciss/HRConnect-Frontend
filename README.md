@@ -1,5 +1,5 @@
 
-````markdown
+
 # HRConnect Frontend
 
 This is the **frontend application** for HRConnect, an AI-powered HR assistant platform. The frontend is built using **Next.js 16**, **TypeScript**, **Tailwind CSS**, and **Framer Motion**. It provides an interactive chat interface for employees to interact with Aiva, the AI assistant.
