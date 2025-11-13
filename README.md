@@ -36,11 +36,16 @@ This is the **frontend application** for HRConnect, an AI-powered HR assistant p
 
 ## Tech Stack
 
-- **Next.js 16** – React framework with Turbopack
-- **TypeScript** – Static typing
-- **Tailwind CSS** – Utility-first styling
-- **Framer Motion** – Animations
-- **Lucide Icons** – Icon library
+| Category               | Tools / Libraries              |
+| ---------------------- | ------------------------------ |
+| **Framework**          | Next.js                        |
+| **Language**           | TypeScript                     |
+| **UI Library**         | ShadCN UI + TailwindCSS        |
+| **Icons**              | Lucide React                   |
+| **HTTP Client**        | Fetch                          |
+| **Animation**          | Framer Motion                  |
+| **Version Control**    | Git + GitHub                   |
+
 
 ---
 
