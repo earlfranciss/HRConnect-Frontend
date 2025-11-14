@@ -14,6 +14,7 @@ import {
 import ChatWidget from "@/components/chatwidget/chat-widget";
 import LogoutButton from "@/components/logout/logout";
 import ChatFullScreen from "@/components/chat/chat";
+import Dashboard from "@/components/dashboard/dashboard";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
 
@@ -46,17 +47,10 @@ export default function Home() {
   if (!authChecked) return null;
 
   return (
-    <main className="h-screen w-full bg-[#CCEEEE] overflow-hidden">
+    <main className="h-screen w-full bg-[#FDFDFD] overflow-hidden">
       <div className="w-full flex items-center justify-center flex-col gap-2">
         <div>
-          <Image
-            src="/img/workflow.png"
-            alt="Workflow Illustration"
-            width={1100}
-            height={1100}
-            className="object-cover mb-2"
-            priority
-          />
+          <Dashboard />
         </div>
       </div>
 
