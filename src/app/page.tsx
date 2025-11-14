@@ -25,6 +25,12 @@ export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const toggleOpen = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   useEffect(() => {
     const match = document.cookie.match(/(^|;) ?auth_token=([^;]*)/);
     const token = match ? match[2] : null;
@@ -42,15 +48,16 @@ export default function Home() {
   return (
     <main className="h-screen w-full bg-[#CCEEEE] overflow-hidden">
       <div className="w-full flex items-center justify-center flex-col gap-2">
-        <Image
-          src="/img/workflow.png"
-          alt="Workflow Illustration"
-          width={1100}
-          height={1100}
-          className="object-cover"
-          priority
-        />
-        <LogoutButton />
+        <div>
+          <Image
+            src="/img/workflow.png"
+            alt="Workflow Illustration"
+            width={1100}
+            height={1100}
+            className="object-cover mb-2"
+            priority
+          />
+        </div>
       </div>
 
       <div className="absolute bottom-0 right-0 flex flex-col items-end justify-end mr-5">
