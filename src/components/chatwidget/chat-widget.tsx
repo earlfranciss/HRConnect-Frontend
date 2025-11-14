@@ -32,10 +32,6 @@ interface ChatWidgetProps {
   onExpand: () => void; // <-- new prop
 }
 
-interface ChatWidgetProps {
-  onExpand: () => void;
-}
-
 function getCookie(name: string) {
   const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
   if (match) return match[2];
@@ -228,7 +224,7 @@ export default function ChatWidget({
             <Bot className="text-white" size={32} />
           </div>
           <h2 className="text-lg font-semibold m-0 mt-5 mb-1">
-            Hello! I'm Aiva your assistant.
+            Hello! I'm Aiva, your assistant.
           </h2>
           <p className="text-gray-500 text-sm mb-4">
             How can I help you today?

@@ -24,13 +24,24 @@ import {
 import ChatLayout from "./chat-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import { useRouter, usePathname } from "next/navigation";
+
 type Message = { sender: "user" | "ai"; text: string; time: string };
 
 interface ChatFullScreenProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   close: () => void;
+  conversation_id?: string | string[];
 }
+
+type Conversation = {
+  conversation_id: number;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
+};
 
 function getCookie(name: string) {
   const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
@@ -42,10 +53,51 @@ export default function ChatFullScreen({
   messages = [],
   setMessages = () => {},
   close = () => {},
+  conversation_id = [],
 }: ChatFullScreenProps) {
   const [inputHeight, setInputHeight] = useState(0);
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [expand, setExpand] = useState(false);
+  const [history, setHistory] = useState<Conversation[]>([]);
+
+  const router = useRouter();
+
+  const pathname = usePathname();
+
+  const isChatPage = pathname?.startsWith("/chat/");
+
+  const chatHistory = async () => {
+    try {
+      const token = getCookie("auth_token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setHistory(data.conversations || []); // depends on your backend structure
+      return data; // chat history response
+    } catch (error) {
+      console.error("Error fetching chat history:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    chatHistory();
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -65,19 +117,6 @@ export default function ChatFullScreen({
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
-
-  const handleSuggestionClick = (text: string) => {
-    const now = new Date();
-    const formattedTime = now.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text, time: formattedTime },
-    ]);
-  };
 
   const handleSend = async () => {
     if (!message.trim()) return;
@@ -194,19 +233,35 @@ export default function ChatFullScreen({
             <p className="text-xs opacity-80">Online</p>
           </div>
         </div>
-        <button
-          onClick={close}
-          className="text-white hover:opacity-80 transition cursor-pointer"
-        >
-          <X size={24} />
-        </button>
+        <div>
+          {isChatPage ? (
+            // Show first button on /chat/{conversation_id}
+            <button
+              onClick={() => {
+                close(); // trigger expand/close logic
+                router.push("/"); // navigate to home
+              }}
+              className="text-white hover:opacity-80 transition cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+          ) : (
+            // Show second button on /
+            <button
+              onClick={close} // just trigger expand/close logic
+              className="text-white hover:opacity-80 transition cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Layout */}
       <div className="flex flex-1 h-full overflow-hidden">
         {/* Sidebar */}
         <div className="w-64 bg-white flex">
-          <ChatLayout />
+          <ChatLayout onExpand={() => setExpand(true)} />
         </div>
 
         {/* Chat Content */}
