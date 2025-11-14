@@ -22,15 +22,9 @@ import TextareaAutosize from "react-textarea-autosize";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
-
-interface ChatWidgetProps {
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  close: () => void; // function from parent
-  onExpand: () => void; // <-- new prop
-}
 
 function getCookie(name: string) {
   const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
@@ -38,32 +32,22 @@ function getCookie(name: string) {
   return null;
 }
 
-export default function ChatWidget({
-  messages,
-  setMessages,
-  close,
-  onExpand,
-}: ChatWidgetProps) {
+export default function ChatWidget() {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [conversationId, setConversationId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
+  const close = () => {
+    console.log("Close button clicked"); // You can replace this with actual close logic
+  };
+
+  // Auto-scroll to bottom whenever messages change
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages]);
-
-  // Load from localStorage once on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("chatMessages");
-    if (saved) setMessages(JSON.parse(saved));
-  }, [setMessages]);
-
-  // Persist to localStorage whenever messages change
-  useEffect(() => {
-    localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
 
   const handleSend = async () => {
@@ -86,23 +70,17 @@ export default function ChatWidget({
     ]);
 
     // Add typing indicator
-    setMessages((prev: any) => [
+    setMessages((prev) => [
       ...prev,
       { sender: "ai", text: "Typing...", time: formattedTime },
     ]);
 
-    // Read token from cookie
     const token = getCookie("auth_token");
-
     if (!token) {
       console.error("No auth token found in cookies.");
-      // Remove typing indicator
       setMessages((prev) => prev.filter((msg) => msg.text !== "Typing..."));
       return;
     }
-
-    console.log("user message: ", message);
-    console.log("user token:", token);
 
     try {
       const res = await fetch(
@@ -113,17 +91,20 @@ export default function ChatWidget({
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ question: userMessage }),
+          body: JSON.stringify({
+            question: userMessage,
+            conversation_id: conversationId,
+          }),
         }
       );
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
       const data = await res.json();
-      console.log("Chatbot response:", data);
+      if (data.conversation_id) setConversationId(data.conversation_id);
 
       // Replace typing indicator with AI response
-      setMessages((prev: any) => {
+      setMessages((prev) => {
         const updated = [...prev];
         const typingIndex = updated.findIndex(
           (msg) => msg.text === "Typing..."
@@ -145,7 +126,7 @@ export default function ChatWidget({
       });
     } catch (error) {
       console.error("Error fetching chatbot response:", error);
-      setMessages((prev: any) => {
+      setMessages((prev) => {
         const updated = [...prev];
         const typingIndex = updated.findIndex(
           (msg) => msg.text === "Typing..."
@@ -168,8 +149,12 @@ export default function ChatWidget({
     }
   };
 
+  const isAiTyping = messages.some(
+    (msg) => msg.sender === "ai" && msg.text === "Typing..."
+  );
+
   return (
-    <Card className="p-0 border-none gap-0! h-full">
+    <Card className="p-0 border-none h-full flex flex-col">
       {/* Header */}
       <CardHeader className="bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white flex items-center justify-between py-3 px-4">
         <div className="flex items-center space-x-2">
@@ -180,19 +165,21 @@ export default function ChatWidget({
             <CardTitle className="text-white text-sm font-medium">
               Aiva
             </CardTitle>
-
             <p className="text-xs opacity-80">Online</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Close Button */}
-          <button
-            onClick={onExpand} // ✅ call parent handler
-            className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
+          <Link
+            href="/chat"
+            className={`text-white opacity-80 hover:opacity-100 text-xl leading-none ${
+              isAiTyping
+                ? "cursor-not-allowed pointer-events-none"
+                : "cursor-pointer"
+            }`}
           >
-            <SquareArrowOutUpRight size={18} className="cursor-pointer" />
-          </button>
+            <SquareArrowOutUpRight size={18} />
+          </Link>
           <button
             className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
             onClick={close}
@@ -204,7 +191,7 @@ export default function ChatWidget({
 
       {/* Content */}
       {messages.length === 0 ? (
-        <CardContent className="flex-1 bg-gray-50 px-6 flex flex-col items-center justify-center text-center space-y-3">
+        <CardContent className="flex-1 bg-white px-6 flex flex-col items-center justify-center text-center space-y-3">
           <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
             <Bot className="text-white" size={32} />
           </div>
@@ -214,27 +201,11 @@ export default function ChatWidget({
           <p className="text-gray-500 text-sm mb-4">
             How can I help you today?
           </p>
-
-          {/* <div className="space-y-2 w-full mt-2">
-            {[
-              "What are the benefits for regular employees?",
-              "How many vacation leave credits do I have left?",
-              "Did I have any late or missing logs this week?",
-            ].map((text, i) => (
-              <button
-                key={i}
-                className="w-full text-sm bg-white hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-3 transition cursor-pointer"
-                onClick={() => handleSuggestionClick(text)}
-              >
-                {text}
-              </button>
-            ))}
-          </div> */}
         </CardContent>
       ) : (
         <CardContent
           ref={scrollRef}
-          className="flex-1 overflow-y-auto bg-gray-50 py-5 pl-4 pr-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+          className="flex-1 overflow-y-auto bg-white py-5 pl-4 pr-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
         >
           <AnimatePresence initial={false}>
             {messages.map((msg, i) => (
@@ -248,22 +219,19 @@ export default function ChatWidget({
                   msg.sender === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                {/* Bot Avatar */}
                 {msg.sender === "ai" && (
                   <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
                     <Bot className="text-[#44B997]" size={16} />
                   </div>
                 )}
 
-                {/* Message Bubble */}
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm wrap-break-word whitespace-pre-wrap ${
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap wrap-break-word ${
                     msg.sender === "user"
                       ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
                       : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
                   }`}
                 >
-                  {/* If AI is typing, show animated dots */}
                   {msg.text === "Typing..." ? (
                     <div className="flex items-center space-x-1 pt-2">
                       <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.2s]" />
@@ -273,17 +241,8 @@ export default function ChatWidget({
                   ) : (
                     <p>{msg.text}</p>
                   )}
-
-                  {/* <p
-                    className={`text-[10px] mt-1 ${
-                      msg.sender === "user" ? "text-[#DCF5EE]" : "text-gray-400"
-                    }`}
-                  >
-                    {msg.time}
-                  </p> */}
                 </div>
 
-                {/* User Avatar */}
                 {msg.sender === "user" && (
                   <div className="w-8">
                     <Avatar>
@@ -308,6 +267,7 @@ export default function ChatWidget({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
+            if (isAiTyping) return;
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSend();
@@ -315,9 +275,14 @@ export default function ChatWidget({
           }}
         />
         <Button
-          className="rounded-full bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] cursor-pointer"
+          className={`rounded-full bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] ${
+            isAiTyping
+              ? "cursor-not-allowed pointer-events-none"
+              : "cursor-pointer"
+          }`}
           size="icon"
           onClick={handleSend}
+          disabled={isAiTyping}
         >
           <Send size={18} className="text-white" />
         </Button>

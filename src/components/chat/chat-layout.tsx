@@ -88,7 +88,7 @@ export default function ChatLayout({ onExpand }: ChatLayoutProps) {
         <Button
           onClick={() => {
             onExpand?.(); // expand the sidebar first
-            router.push("/"); // then navigate
+            router.push("/chat"); // then navigate
           }}
           className="flex justify-start gap-2 bg-gray-100 text-black text-sm rounded-lg p-6 mx-2 cursor-pointer hover:bg-gray-200 border border-[#4AADB9]"
         >
