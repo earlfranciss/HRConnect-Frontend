@@ -36,11 +36,16 @@ This is the **frontend application** for HRConnect, an AI-powered HR assistant p
 
 ## Tech Stack
 
-- **Next.js 16** – React framework with Turbopack
-- **TypeScript** – Static typing
-- **Tailwind CSS** – Utility-first styling
-- **Framer Motion** – Animations
-- **Lucide Icons** – Icon library
+| Category               | Tools / Libraries              |
+| ---------------------- | ------------------------------ |
+| **Framework**          | Next.js                        |
+| **Language**           | TypeScript                     |
+| **UI Library**         | ShadCN UI + TailwindCSS        |
+| **Icons**              | Lucide React                   |
+| **HTTP Client**        | Fetch                          |
+| **Animation**          | Framer Motion                  |
+| **Version Control**    | Git + GitHub                   |
+
 
 ---
 
@@ -81,11 +86,59 @@ Open [http://localhost:3000](http://localhost:3000) to view the frontend.
 ## Project Structure
 
 ```
-src/
-├─ app/           # Next.js routes, pages, layout
-├─ components/    # Reusable UI components (ChatWidget, ChatFullScreen, Buttons, Cards)
-├─ hooks/         # Custom React hooks
-├─ lib/           # Utility functions and helpers
+HRConnect_Frontend/
+├── public/                  # Static assets
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── vercel.svg
+│   ├── window.svg
+│   └── img/                 # Images used in the app
+│       ├── chat-icon.png
+│       ├── login.jpg
+│       └── workflow.png
+│
+└── src/
+    ├── app/                 # Next.js routes, pages, layout
+    │   ├── favicon.ico
+    │   ├── globals.css
+    │   ├── layout.tsx
+    │   ├── page.tsx
+    │   ├── chat/            # Chat route and layout
+    │   │   ├── layout.tsx
+    │   │   └── page.tsx
+    │   └── login/           # Login page route
+    │       └── page.tsx
+    │
+    ├── components/          # Reusable UI components
+    │   ├── app-sidebar.tsx
+    │   ├── chat/
+    │   │   ├── chat-layout.tsx
+    │   │   └── chat.tsx
+    │   ├── chatwidget/
+    │   │   └── chat-widget.tsx
+    │   ├── logout/
+    │   │   └── logout.tsx
+    │   └── ui/               # Generic UI elements
+    │       ├── avatar.tsx
+    │       ├── button.tsx
+    │       ├── card.tsx
+    │       ├── collapsible.tsx
+    │       ├── dropdown-menu.tsx
+    │       ├── input.tsx
+    │       ├── popover.tsx
+    │       ├── scroll-area.tsx
+    │       ├── separator.tsx
+    │       ├── sheet.tsx
+    │       ├── sidebar.tsx
+    │       ├── skeleton.tsx
+    │       ├── textarea.tsx
+    │       └── tooltip.tsx
+    │
+    ├── hooks/               # Custom React hooks
+    │   └── use-mobile.ts
+    │
+    └── lib/                 # Utility functions and helpers
+        └── utils.ts
 
 ```
 
