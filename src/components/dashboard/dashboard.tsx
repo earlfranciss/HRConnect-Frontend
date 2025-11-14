@@ -8,17 +8,17 @@ import {
     CardFooter,
 } from "@/components/ui/card";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator"
@@ -65,6 +65,7 @@ export default function Dashboard() {
                 <p className="text-xs text-[#6C6767]">Here's what's happening with your work today</p>
             </div>
             <div className="flex gap-4">
+                {/* Left section */}
                 <div className="flex flex-col gap-4">
                     {/* Leave Balance */}
                     <div className="bg-white rounded-lg border border-gray-200  p-[25px]">
@@ -77,11 +78,11 @@ export default function Dashboard() {
                                 <h2 className="font-['Segoe_UI'] font-bold text-gray-900">Leave Balance</h2>
 
                             </div>
-                            <div className="flex items-center gap-1">
+                            {/* <div className="flex items-center gap-1">
 
-                            <Plus size={14} className="text-blue-500" />
-                            <h2 className="text-xs text-blue-500">Apply for leave</h2>
-                            </div>
+                                <Plus size={14} className="text-blue-500" />
+                                <h2 className="text-xs text-blue-500">Apply for leave</h2>
+                            </div> */}
                         </div>
                         <div className="max-h-[280px] flex gap-2">
                             {[
@@ -132,6 +133,8 @@ export default function Dashboard() {
                     </div>
 
                 </div>
+
+                {/* Right section */}
                 <div className="flex flex-col gap-4">
                     {/* Attendance */}
                     <div className="bg-white rounded-lg border border-gray-200 pb-1 p-[25px] ">
@@ -172,9 +175,9 @@ export default function Dashboard() {
                                     <span
                                         className="flex items-center justify-center w-3 h-3 rounded-full font-bold text-xs text-white"
                                         style={{ backgroundColor: req.color, }}
-                                    ></span>    
+                                    ></span>
                                     <div className=" font-light text-xs text-gray-500">{req.legend}</div>
-                            </div>
+                                </div>
                             ))}
                         </div>
                     </div>
