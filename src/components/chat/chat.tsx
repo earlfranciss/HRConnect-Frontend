@@ -4,7 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import TextareaAutosize from "react-textarea-autosize";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThumbsUp, ThumbsDown, Send, Paperclip, Bot, User, Pencil, X } from "lucide-react";
+import {
+  ThumbsUp,
+  ThumbsDown,
+  Send,
+  Paperclip,
+  Bot,
+  User,
+  Pencil,
+  X,
+} from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -12,6 +21,8 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import ChatLayout from "./chat-layout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
 
@@ -19,6 +30,12 @@ interface ChatFullScreenProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   close: () => void;
+}
+
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  if (match) return match[2];
+  return null;
 }
 
 export default function ChatFullScreen({
@@ -49,24 +66,6 @@ export default function ChatFullScreen({
     localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
 
-
-  const handleSend = () => {
-    if (!message.trim()) return;
-    const now = new Date();
-    const formattedTime = now.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text: message, time: formattedTime },
-    ]);
-    setMessage("");
-
-
-  };
-
   const handleSuggestionClick = (text: string) => {
     const now = new Date();
     const formattedTime = now.toLocaleTimeString([], {
@@ -80,6 +79,107 @@ export default function ChatFullScreen({
     ]);
   };
 
+  const handleSend = async () => {
+    if (!message.trim()) return;
+
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    const userMessage = message;
+    setMessage("");
+
+    // Add user message
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: userMessage, time: formattedTime },
+    ]);
+
+    // Add typing indicator
+    setMessages((prev: any) => [
+      ...prev,
+      { sender: "ai", text: "Typing...", time: formattedTime },
+    ]);
+
+    // Read token from cookie
+    const token = getCookie("auth_token");
+
+    if (!token) {
+      console.error("No auth token found in cookies.");
+      // Remove typing indicator
+      setMessages((prev) => prev.filter((msg) => msg.text !== "Typing..."));
+      return;
+    }
+
+    console.log("user message: ", message);
+    console.log("user token:", token);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/query`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ question: userMessage }),
+        }
+      );
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      const data = await res.json();
+      console.log("Chatbot response:", data);
+
+      // Replace typing indicator with AI response
+      setMessages((prev: any) => {
+        const updated = [...prev];
+        const typingIndex = updated.findIndex(
+          (msg) => msg.text === "Typing..."
+        );
+        if (typingIndex !== -1) updated.splice(typingIndex, 1);
+
+        return [
+          ...updated,
+          {
+            sender: "ai",
+            text: data.answer || "Sorry, I couldn't find an answer.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+          },
+        ];
+      });
+    } catch (error) {
+      console.error("Error fetching chatbot response:", error);
+      setMessages((prev: any) => {
+        const updated = [...prev];
+        const typingIndex = updated.findIndex(
+          (msg) => msg.text === "Typing..."
+        );
+        if (typingIndex !== -1) updated.splice(typingIndex, 1);
+
+        return [
+          ...updated,
+          {
+            sender: "ai",
+            text: "Oops! Something went wrong. Please try again later.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+          },
+        ];
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
@@ -90,221 +190,150 @@ export default function ChatFullScreen({
             <Bot className="text-[#44B997]" size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold m-0">Aiva</h2>
+            <h2 className="text-xl font-bold">HRConnect Aiva</h2>
             <p className="text-xs opacity-80">Online</p>
           </div>
         </div>
-        <button onClick={close} className="text-white hover:opacity-80">
+        <button
+          onClick={close}
+          className="text-white hover:opacity-80 transition cursor-pointer"
+        >
           <X size={24} />
         </button>
       </div>
 
-        {/* Content */}
-        {messages.length === 0 ? (
-          <CardContent className="flex flex-col h-screen">
-            <div className="flex-1 bg-gray-50 px-6 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
-              <Bot className="text-white" size={32} />
-            </div>
-            <h2 className="text-lg font-semibold m-0 mt-5 mb-1">
-              Hello! I'm Aiva your assistant.
-            </h2>
-            <p className="text-gray-500 text-sm mb-4">
-              How can I help you today?
-            </p>
-            </div>
+      {/* Layout */}
+      <div className="flex flex-1 h-full overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-64 bg-white flex">
+          <ChatLayout />
+        </div>
 
-
-           <div className="flex flex-wrap gap-2 w-full mt-2 px-14">
-  {
-[
-  "How can I update my personal information?",
-  "Can I view my payslips online?",
-  "What is the process for applying for sick leave?",
-  "Are there any upcoming company events?",
-  "How do I submit my timesheet for approval?",
-  "Who can I contact for IT support?"
-]
-
-  .map((text, i) => (
-    <button
-      key={i}
-      className="flex-1 min-w-[30%] max-w-[32%] text-sm bg-gray-100 hover:bg-white hover:border-[#4AADB9] border border-gray-200 rounded-lg py-2 px-3 transition cursor-pointer"
-      onClick={() => handleSuggestionClick(text)}
-    >
-      {text}
-    </button>
-  ))}
-</div>
-
-
-          </CardContent>
-        ) : (
-          <CardContent
+        {/* Chat Content */}
+        <div className="flex-1 flex flex-col bg-gray-50">
+          {/* Messages */}
+          <div
             ref={scrollRef}
-            className="flex-1 bg-gray-50 overflow-y-auto py-5 pr-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
-            <AnimatePresence initial={false}>
-            {messages.map((msg, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.25 }}
-                  className={`flex items-end space-x-2 
-                    ${msg.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-end h-full text-center space-y-3">
+                <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
+                  <Bot className="text-white" size={32} />
+                </div>
+                <h2 className="text-lg font-semibold mt-5 mb-1">
+                  Hello! I'm Aiva your assistant.
+                </h2>
+                <p className="text-gray-500 text-sm mb-4">
+                  How can I help you today?
+                </p>
 
-                  {/* Bot avatar */}
-                  {msg.sender === "ai" && (
-                  <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
-                    <Bot className="text-[#44B997]" size={16} />
-                  </div>
-                )}
-
-                  {msg.sender === "user" && (
-                    <div className="flex w-full justify-end mt-2 gap-2 mb-10">
-
-                      {/* Edit */}
-                      <Pencil className="w-4 h-4 text-xs text-[#7C8199] hover:text-slate-700" />
-
-                    </div>
-                  )}
-
-
-                  {/* Chat Bubble */}
-                  <div className="flex flex-col items-start">
-                    <div
-                      className={`inline-block max-w-3xl p-4 text-sm min-w-12 
-                        ${msg.sender === "user"
-                          ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-t-xl rounded-bl-xl"
-                          : "bg-[#F0F6FF] text-[#1B2559] rounded-t-xl rounded-br-xl"
-                        }`}
+                <div className="grid grid-cols-3 mt-50 gap-2 w-full">
+                  {[
+                    "How can I update my personal information?",
+                    "Can I view my payslips online?",
+                    "What is the process for applying for sick leave?",
+                    "Are there any upcoming company events?",
+                    "How do I submit my timesheet for approval?",
+                    "Who can I contact for IT support?",
+                  ].map((text, i) => (
+                    <button
+                      key={i}
+                      className="flex-1 min-w-[45%] py-3 px-4 text-sm  bg-white border-[#4AADB9] border rounded-lg transition cursor-pointer"
+                      onClick={() => handleSend()}
                     >
-
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
-
-                    </div>
-                    {msg.sender === "ai" && (
-                      <div className="flex w-full justify-between items-center mt-2">
-                        {/* Timestamp */}
-                        <p className="text-xs text-[#7C8199]">{msg.time}</p>
-
-                        {/* Action buttons */}
-                        <div className="flex gap-2 text-[#7C8199] pr-2">
-                          <button
-                            aria-label="Like message"
-                            className="transition hover:text-green-500"
-                          >
-                            <ThumbsUp className="w-4 h-4 " />
-                          </button>
-                          <button
-                            aria-label="Dislike message"
-                            className="rounded-full transition hover:text-red-500"
-                          >
-                            <ThumbsDown className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {msg.sender === "user" && (
-                      <div className="flex w-full justify-end mt-2 gap-2">
-
-                        {/* Timestamp */}
-                        <p className="text-[10px] text-[#7C8199]">{msg.time}</p>
-                      </div>
-                    )}
-
-                  </div>
-
-
-
-                  {/* User avatar */}
-                  {msg.sender === "user" && (
-                  <div className="w-12 mb-6">
-                    <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
-                      <User className="text-[#44B997]" size={20} />
-                    </div>
-                  </div>
-                )}
-                </motion.div>
-              )
-            )}
-
-
-
-
-            {/* Suggested actions */}
-            {/* {messages.length > 0 && messages[messages.length - 1].sender === "ai" && (
-              <div className="flex flex-wrap gap-3 justify-start ml-8 mt-4">
-                {[
-                  "Can I file a vacation leave next week?",
-                  "Show my leave history for this year",
-                ].map((text, idx) => (
-                  <Button
-                    key={idx}
-                    variant="outline"
-                    className="p-3 rounded-full bg-gradient-to-b from-[#4AADB9] to-[#44B997] text-white text-xs border-none hover:bg-[#2c3e1a] transition"
-                  >
-                    {text}
-                  </Button>
-                ))}
+                      {text}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )} */}
-            </AnimatePresence>
-          </CardContent>
-        )}
-    
-
-      {/* Floating sticky input */}
-      <div
-        className="sticky bottom-0 left-0 right-0 z-20 p-6 flex flex-col gap-2 "
-        style={{ maxWidth: "calc(100% - 32px)" }}
-      >
-        {/* <div className="flex justify-center mb-2">
-          <Button
-            variant="ghost"
-            className="rounded-full p-4 text-[#666D91] border border-[#666D91] hover:bg-[#CEEAE7] transition text-sm"
-          >
-            Regenerate response
-          </Button>
-        </div> */}
-
-        <div className="flex items-end gap-2">
-          <Button className="bg-gray-100 hover:bg-gray-200 text-[#1B2559] rounded-lg p-4 m-1">
-            <Paperclip className="w-8 h-8" />
-          </Button>
-
-          <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
-            <TextareaAutosize
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              onHeightChange={(height) => setInputHeight(height)}
-              placeholder="Ask anything"
-              minRows={1}
-              maxRows={5}
-              className="flex-1 border-none bg-transparent resize-none focus-visible:ring-0 text-sm p-1 text-[#1B2559] outline-none"
-            />
-
+            ) : (
+              <AnimatePresence initial={false}>
+                {messages.map((msg, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.25 }}
+                    className={`flex items-end space-x-2 ${
+                      msg.sender === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {msg.sender === "ai" && (
+                      <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
+                        <Bot className="text-[#44B997]" size={16} />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm wrap-break-word whitespace-pre-wrap ${
+                        msg.sender === "user"
+                          ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
+                          : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
+                      }`}
+                    >
+                      {msg.text === "Typing..." ? (
+                        <div className="flex items-center space-x-1">
+                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.2s]" />
+                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.1s]" />
+                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                        </div>
+                      ) : (
+                        <p>{msg.text}</p>
+                      )}
+                      <p
+                        className={`text-[10px] mt-1 ${
+                          msg.sender === "user"
+                            ? "text-[#DCF5EE]"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {msg.time}
+                      </p>
+                    </div>
+                    {msg.sender === "user" && (
+                      <Avatar>
+                        <AvatarImage
+                          src="https://github.com/shadcn.png"
+                          alt="@shadcn"
+                        />
+                        <AvatarFallback>CN</AvatarFallback>
+                      </Avatar>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
           </div>
 
-
-          <Button
-            className="bg-[#4AADB9] hover:bg-[#62CAD6] text-white rounded-full p-5 m-1"
-            onClick={handleSend}
-          >
-            <Send className="w-8 h-8" />
-          </Button>
-
+          {/* Input */}
+          <div className="p-4 border-t bg-white">
+            <div className="flex items-end gap-2">
+              <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
+                <TextareaAutosize
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  onHeightChange={(height) => setInputHeight(height)}
+                  placeholder="Ask anything about HR..."
+                  minRows={1}
+                  maxRows={5}
+                  className="flex-1 border-none bg-transparent resize-none focus-visible:ring-0 text-sm p-1 text-[#1B2559] outline-none"
+                />
+              </div>
+              <Button
+                className="bg-[#4AADB9] hover:bg-[#62CAD6] text-white rounded-full p-4 cursor-pointer"
+                onClick={handleSend}
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
