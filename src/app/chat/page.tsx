@@ -4,45 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import TextareaAutosize from "react-textarea-autosize";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ThumbsUp,
-  ThumbsDown,
-  Send,
-  Paperclip,
-  Bot,
-  User,
-  Pencil,
-  X,
-} from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import ChatLayout from "./chat-layout";
+import { Send, Bot, X } from "lucide-react";
+import ChatLayout from "@/components/chat/chat-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import { useRouter, usePathname } from "next/navigation";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
-
-interface ChatFullScreenProps {
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  close: () => void;
-  conversation_id?: string | string[];
-  onExpand: () => void;
-}
-
-type Conversation = {
-  conversation_id: number;
-  title: string | null;
-  created_at: string;
-  updated_at: string;
-  user_id: number;
-};
 
 function getCookie(name: string) {
   const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
@@ -50,25 +17,17 @@ function getCookie(name: string) {
   return null;
 }
 
-export default function ChatFullScreen({
-  messages = [],
-  setMessages = () => {},
-  close = () => {},
-  onExpand = () => {},
-}: ChatFullScreenProps) {
-  const [inputHeight, setInputHeight] = useState(0);
-  const [message, setMessage] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
+export default function ChatFullScreen() {
+  const [inputMessage, setInputMessage] = useState(""); // For textarea input
+  const [messages, setMessages] = useState<Message[]>([]); // Chat history
   const [expand, setExpand] = useState(false);
-  const [history, setHistory] = useState<Conversation[]>([]);
+  const [conversationId, setConversationId] = useState<number | null>(null);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
   const pathname = usePathname();
 
-  const isChatPage = pathname?.startsWith("/chat/");
-
-  // Auto-scroll to bottom
+  // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -76,19 +35,18 @@ export default function ChatFullScreen({
     });
   }, [messages]);
 
-  // Load from localStorage once on mount
+  // Persist messages
   useEffect(() => {
     const saved = localStorage.getItem("chatMessages");
     if (saved) setMessages(JSON.parse(saved));
-  }, [setMessages]);
+  }, []);
 
-  // Persist to localStorage whenever messages change
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
 
   const handleSend = async () => {
-    if (!message.trim()) return;
+    if (!inputMessage.trim()) return;
 
     const now = new Date();
     const formattedTime = now.toLocaleTimeString([], {
@@ -97,33 +55,26 @@ export default function ChatFullScreen({
       hour12: true,
     });
 
-    const userMessage = message;
-    setMessage("");
-
     // Add user message
     setMessages((prev) => [
       ...prev,
-      { sender: "user", text: userMessage, time: formattedTime },
+      { sender: "user", text: inputMessage, time: formattedTime },
     ]);
 
+    setInputMessage(""); // clear textarea
+
     // Add typing indicator
-    setMessages((prev: any) => [
+    setMessages((prev) => [
       ...prev,
       { sender: "ai", text: "Typing...", time: formattedTime },
     ]);
 
-    // Read token from cookie
     const token = getCookie("auth_token");
-
     if (!token) {
       console.error("No auth token found in cookies.");
-      // Remove typing indicator
       setMessages((prev) => prev.filter((msg) => msg.text !== "Typing..."));
       return;
     }
-
-    console.log("user message: ", message);
-    console.log("user token:", token);
 
     try {
       const res = await fetch(
@@ -134,17 +85,20 @@ export default function ChatFullScreen({
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ question: userMessage }),
+          body: JSON.stringify({
+            question: inputMessage,
+            conversation_id: conversationId,
+          }),
         }
       );
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
       const data = await res.json();
-      console.log("Chatbot response:", data);
+      if (data.conversation_id) setConversationId(data.conversation_id);
 
       // Replace typing indicator with AI response
-      setMessages((prev: any) => {
+      setMessages((prev) => {
         const updated = [...prev];
         const typingIndex = updated.findIndex(
           (msg) => msg.text === "Typing..."
@@ -166,7 +120,7 @@ export default function ChatFullScreen({
       });
     } catch (error) {
       console.error("Error fetching chatbot response:", error);
-      setMessages((prev: any) => {
+      setMessages((prev) => {
         const updated = [...prev];
         const typingIndex = updated.findIndex(
           (msg) => msg.text === "Typing..."
@@ -189,6 +143,10 @@ export default function ChatFullScreen({
     }
   };
 
+  const isAiTyping = messages.some(
+    (msg) => msg.sender === "ai" && msg.text === "Typing..."
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
       {/* Header */}
@@ -203,26 +161,12 @@ export default function ChatFullScreen({
           </div>
         </div>
         <div>
-          {isChatPage ? (
-            // Show first button on /chat/{conversation_id}
-            <button
-              onClick={() => {
-                close(); // trigger expand/close logic
-                router.push("/"); // navigate to home
-              }}
-              className="text-white hover:opacity-80 transition cursor-pointer"
-            >
-              <X size={24} />
-            </button>
-          ) : (
-            // Show second button on /
-            <button
-              onClick={close} // just trigger expand/close logic
-              className="text-white hover:opacity-80 transition cursor-pointer"
-            >
-              <X size={24} />
-            </button>
-          )}
+          <button
+            onClick={() => router.push("/")}
+            className="text-white hover:opacity-80 transition cursor-pointer"
+          >
+            <X size={24} />
+          </button>
         </div>
       </div>
 
@@ -251,25 +195,6 @@ export default function ChatFullScreen({
                 <p className="text-gray-500 text-sm mb-4">
                   How can I help you today?
                 </p>
-
-                {/* <div className="grid grid-cols-3 mt-50 gap-2 w-full">
-                  {[
-                    "How can I update my personal information?",
-                    "Can I view my payslips online?",
-                    "What is the process for applying for sick leave?",
-                    "Are there any upcoming company events?",
-                    "How do I submit my timesheet for approval?",
-                    "Who can I contact for IT support?",
-                  ].map((text, i) => (
-                    <button
-                      key={i}
-                      className="flex-1 min-w-[45%] py-3 px-4 text-sm  bg-white border-[#4AADB9] border rounded-lg transition cursor-pointer"
-                      onClick={() => handleSend()}
-                    >
-                      {text}
-                    </button>
-                  ))}
-                </div> */}
               </div>
             ) : (
               <AnimatePresence initial={false}>
@@ -290,7 +215,7 @@ export default function ChatFullScreen({
                       </div>
                     )}
                     <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm wrap-break-word whitespace-pre-wrap ${
+                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap wrap-break-word ${
                         msg.sender === "user"
                           ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
                           : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
@@ -335,15 +260,15 @@ export default function ChatFullScreen({
             <div className="flex items-end gap-2">
               <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
                 <TextareaAutosize
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={(e) => {
+                    if (isAiTyping) return;
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
                     }
                   }}
-                  onHeightChange={(height) => setInputHeight(height)}
                   placeholder="Ask anything about HR..."
                   minRows={1}
                   maxRows={5}
@@ -351,8 +276,13 @@ export default function ChatFullScreen({
                 />
               </div>
               <Button
-                className="bg-[#4AADB9] hover:bg-[#62CAD6] text-white rounded-full p-4 cursor-pointer"
+                className={`rounded-full bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] ${
+                  isAiTyping
+                    ? "cursor-not-allowed pointer-events-none"
+                    : "cursor-pointer"
+                }`}
                 onClick={handleSend}
+                disabled={isAiTyping}
               >
                 <Send className="w-5 h-5" />
               </Button>
