@@ -32,10 +32,6 @@ interface ChatWidgetProps {
   onExpand: () => void; // <-- new prop
 }
 
-interface ChatWidgetProps {
-  onExpand: () => void;
-}
-
 function getCookie(name: string) {
   const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
   if (match) return match[2];
