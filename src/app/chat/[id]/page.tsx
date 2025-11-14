@@ -3,11 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, X, Send } from "lucide-react";
+import { Bot, X, Send, Settings, Trash } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import ChatLayout from "@/components/chat/chat-layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
 
@@ -19,7 +26,7 @@ function getCookie(name: string) {
 export default function ChatHistory() {
   const router = useRouter();
   const params = useParams();
-  const conversation_id = params?.id;
+  const conversation_id = Number(params.id); // make sure it's a number
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -80,25 +87,142 @@ export default function ChatHistory() {
     });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: "user",
-        text: message,
-        time: new Date().toLocaleTimeString(),
-      },
-    ]);
+
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    const userMessage = message;
     setMessage("");
 
-    // Optionally, send to backend API
+    // Add user message
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: userMessage, time: formattedTime },
+    ]);
+
+    // Add typing indicator
+    setMessages((prev: any) => [
+      ...prev,
+      { sender: "ai", text: "Typing...", time: formattedTime },
+    ]);
+
+    // Read token from cookie
+    const token = getCookie("auth_token");
+
+    if (!token) {
+      console.error("No auth token found in cookies.");
+      // Remove typing indicator
+      setMessages((prev) => prev.filter((msg) => msg.text !== "Typing..."));
+      return;
+    }
+
+    console.log("user message: ", message);
+    console.log("user token:", token);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/query`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            question: userMessage,
+            conversation_id: conversation_id,
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      const data = await res.json();
+      console.log("Chatbot response:", data);
+
+      // Replace typing indicator with AI response
+      setMessages((prev: any) => {
+        const updated = [...prev];
+        const typingIndex = updated.findIndex(
+          (msg) => msg.text === "Typing..."
+        );
+        if (typingIndex !== -1) updated.splice(typingIndex, 1);
+
+        return [
+          ...updated,
+          {
+            sender: "ai",
+            text: data.answer || "Sorry, I couldn't find an answer.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+          },
+        ];
+      });
+    } catch (error) {
+      console.error("Error fetching chatbot response:", error);
+      setMessages((prev: any) => {
+        const updated = [...prev];
+        const typingIndex = updated.findIndex(
+          (msg) => msg.text === "Typing..."
+        );
+        if (typingIndex !== -1) updated.splice(typingIndex, 1);
+
+        return [
+          ...updated,
+          {
+            sender: "ai",
+            text: "Oops! Something went wrong. Please try again later.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+          },
+        ];
+      });
+    }
+  };
+
+  const deleteChat = async (conversation_id: number) => {
+    try {
+      const token = getCookie("auth_token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${conversation_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.error("Failed to delete:", await res.text());
+        return false;
+      }
+      router.push("/");
+      return true;
+    } catch (err) {
+      console.error("Delete error:", err);
+      return false;
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#44B997] to-[#4AADB9] text-white shadow-md">
+      <div className="flex items-center justify-between p-4 bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white shadow-md">
         <div className="flex items-center gap-2">
           <div className="bg-white p-2 rounded-full">
             <Bot className="text-[#44B997]" size={22} />
@@ -122,7 +246,7 @@ export default function ChatHistory() {
       <div className="flex flex-1 h-full overflow-hidden">
         {/* Sidebar */}
         <div className="w-64 bg-white flex">
-          <ChatLayout onExpand={() => setIsExpanded(!isExpanded)} />
+          <ChatLayout onExpand={() => setIsExpanded(isExpanded)} />
         </div>
 
         {/* Chat Content */}
@@ -132,15 +256,9 @@ export default function ChatHistory() {
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
-            {loading && (
-              <div className="text-center text-gray-500">
-                Loading messages...
-              </div>
-            )}
-
             {!loading && messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                <div className="bg-gradient-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
+                <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
                   <Bot className="text-white" size={32} />
                 </div>
                 <h2 className="text-lg font-semibold mt-5 mb-1">
@@ -149,25 +267,6 @@ export default function ChatHistory() {
                 <p className="text-gray-500 text-sm mb-4">
                   How can I help you today?
                 </p>
-
-                <div className="grid grid-cols-3 gap-2 w-full">
-                  {[
-                    "How can I update my personal information?",
-                    "Can I view my payslips online?",
-                    "What is the process for applying for sick leave?",
-                    "Are there any upcoming company events?",
-                    "How do I submit my timesheet for approval?",
-                    "Who can I contact for IT support?",
-                  ].map((text, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setMessage(text)}
-                      className="flex-1 min-w-[45%] py-3 px-4 text-sm bg-white border-[#4AADB9] border rounded-lg transition cursor-pointer"
-                    >
-                      {text}
-                    </button>
-                  ))}
-                </div>
               </div>
             ) : (
               <AnimatePresence initial={false}>
@@ -189,9 +288,9 @@ export default function ChatHistory() {
                     )}
 
                     <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm break-words whitespace-pre-wrap ${
+                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm wrap-break-word whitespace-pre-wrap ${
                         msg.sender === "user"
-                          ? "bg-gradient-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
+                          ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
                           : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
                       }`}
                     >
@@ -205,7 +304,7 @@ export default function ChatHistory() {
                         <p>{msg.text}</p>
                       )}
 
-                      <p
+                      {/* <p
                         className={`text-[10px] mt-1 ${
                           msg.sender === "user"
                             ? "text-[#DCF5EE]"
@@ -213,7 +312,7 @@ export default function ChatHistory() {
                         }`}
                       >
                         {msg.time}
-                      </p>
+                      </p> */}
                     </div>
 
                     {msg.sender === "user" && (
@@ -234,6 +333,23 @@ export default function ChatHistory() {
           {/* Input */}
           <div className="p-4 border-t bg-white">
             <div className="flex items-end gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button className="cursor-pointer bg-transparent hover:bg-transparent">
+                    <Settings className="text-black" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 border-none">
+                  <Button
+                    className="cursor-pointer border-nonetext-white bg-red-400 hover:bg-red-500"
+                    onClick={() => deleteChat(conversation_id)}
+                  >
+                    <Trash className="text-white" />
+                    Delete
+                  </Button>
+                </PopoverContent>
+              </Popover>
+
               <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
                 <TextareaAutosize
                   value={message}

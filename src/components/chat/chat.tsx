@@ -33,6 +33,7 @@ interface ChatFullScreenProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   close: () => void;
   conversation_id?: string | string[];
+  onExpand: () => void;
 }
 
 type Conversation = {
@@ -53,7 +54,7 @@ export default function ChatFullScreen({
   messages = [],
   setMessages = () => {},
   close = () => {},
-  conversation_id = [],
+  onExpand = () => {},
 }: ChatFullScreenProps) {
   const [inputHeight, setInputHeight] = useState(0);
   const [message, setMessage] = useState("");
@@ -66,38 +67,6 @@ export default function ChatFullScreen({
   const pathname = usePathname();
 
   const isChatPage = pathname?.startsWith("/chat/");
-
-  const chatHistory = async () => {
-    try {
-      const token = getCookie("auth_token");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
-      }
-
-      const data = await res.json();
-      setHistory(data.conversations || []); // depends on your backend structure
-      return data; // chat history response
-    } catch (error) {
-      console.error("Error fetching chat history:", error);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    chatHistory();
-  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -272,7 +241,7 @@ export default function ChatFullScreen({
             className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-end h-full text-center space-y-3">
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
                 <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
                   <Bot className="text-white" size={32} />
                 </div>
@@ -283,7 +252,7 @@ export default function ChatFullScreen({
                   How can I help you today?
                 </p>
 
-                <div className="grid grid-cols-3 mt-50 gap-2 w-full">
+                {/* <div className="grid grid-cols-3 mt-50 gap-2 w-full">
                   {[
                     "How can I update my personal information?",
                     "Can I view my payslips online?",
@@ -300,7 +269,7 @@ export default function ChatFullScreen({
                       {text}
                     </button>
                   ))}
-                </div>
+                </div> */}
               </div>
             ) : (
               <AnimatePresence initial={false}>

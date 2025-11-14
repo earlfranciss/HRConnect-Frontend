@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
@@ -46,8 +46,6 @@ export default function ChatWidget({
 }: ChatWidgetProps) {
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(true);
-  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -170,19 +168,6 @@ export default function ChatWidget({
     }
   };
 
-  const handleSuggestionClick = (text: string) => {
-    const now = new Date();
-    const formattedTime = now.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text, time: formattedTime },
-    ]);
-  };
-
   return (
     <Card className="p-0 border-none gap-0! h-full">
       {/* Header */}
@@ -289,13 +274,13 @@ export default function ChatWidget({
                     <p>{msg.text}</p>
                   )}
 
-                  <p
+                  {/* <p
                     className={`text-[10px] mt-1 ${
                       msg.sender === "user" ? "text-[#DCF5EE]" : "text-gray-400"
                     }`}
                   >
                     {msg.time}
-                  </p>
+                  </p> */}
                 </div>
 
                 {/* User Avatar */}

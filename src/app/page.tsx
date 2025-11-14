@@ -104,6 +104,7 @@ export default function Home() {
                 messages={messages}
                 setMessages={setMessages}
                 close={() => setIsFullScreen(false)}
+                onExpand={() => true}
               />
             </motion.div>
           ) : (
@@ -144,7 +145,6 @@ export default function Home() {
                     setMessages={setMessages}
                     close={() => setIsOpen(false)}
                     onExpand={() => {
-                      setIsOpen(false);
                       // Slight delay for smoother transition to fullscreen
                       setTimeout(() => setIsFullScreen(true), 150);
                     }}
