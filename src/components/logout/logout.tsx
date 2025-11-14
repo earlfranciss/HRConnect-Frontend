@@ -17,7 +17,7 @@ export default function LogoutButton() {
         .find((row) => row.startsWith("auth_token="))
         ?.split("=")[1];
 
-      await fetch("http://127.0.0.1:8000/api/v1/auth/logout", {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/auth/logout`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`, // <-- Add this
@@ -39,7 +39,7 @@ export default function LogoutButton() {
     <Button
       onClick={handleLogout}
       disabled={loading}
-      className="cursor-pointer"
+      className="cursor-pointer bg-red-500 hover:bg-red-600 text-white"
     >
       {loading ? "Logging out..." : "Logout"}
     </Button>
