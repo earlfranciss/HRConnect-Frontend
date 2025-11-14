@@ -7,6 +7,19 @@ import {
     CardContent,
     CardFooter,
 } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator"
 import { Bell, Settings, Calendar, File, FileCheck, FileText, Plus } from "lucide-react";
@@ -26,8 +39,23 @@ export default function Dashboard() {
                     </div>
                 </div>
                 <div className="flex gap-4 ">
-                    <Bell size={18} />
-                    <Settings size={18} />
+                    <Popover>
+                        <PopoverTrigger>
+                            <Bell size={18} />
+                        </PopoverTrigger>
+                        <PopoverContent className="">Notifications</PopoverContent>
+                    </Popover>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger><Settings size={18} /></DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>Profile</DropdownMenuItem>
+                            <DropdownMenuItem>Billing</DropdownMenuItem>
+                            <DropdownMenuItem>Team</DropdownMenuItem>
+                            <DropdownMenuItem>Subscription</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
             <Separator />
@@ -94,7 +122,7 @@ export default function Dashboard() {
                                 { title: 'WFH Request', submitted: 'Nov 22', approver: 'Manager' }
                             ].map((req, i) => (
                                 <div key={i} className="relative p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 last:mb-0">
-                                    <span className="absolute top-[13px] right-[13px] px-[11px] py-[3px] bg-green-50 border border-green-300 rounded-full font-['Segoe_UI'] font-bold text-xs text-gray-700">Pending</span>
+                                    <span className="absolute top-[13px] right-[13px] px-[11px] py-[3px] bg-green-50 border border-green-300 rounded-full font-['Segoe_UI'] font-bold text-xs text-gray-700">Approved</span>
                                     <div className="font-['Segoe_UI'] font-semibold text-sm text-gray-900 mb-2 pr-20">{req.title}</div>
                                     <div className="font-['Segoe_UI'] font-semibold text-[11.6px] text-gray-500 mb-1">Submitted: {req.submitted}</div>
                                     <div className="font-['Segoe_UI'] font-semibold text-[11.6px] text-gray-500">Approver: {req.approver}</div>
@@ -124,7 +152,7 @@ export default function Dashboard() {
                                 { day: 'Sun', date: 15, color: "gray" },
                             ].map((req, i) => (
                                 <div key={i} className="flex flex-col p-2 rounded-lg justify-center items-center mb-1 ">
-                                    <div className=" font-light text-xs text-gray-900 mb-2">{req.day}</div>
+                                    <div className=" font-light text-xs text-gray-500 mb-2">{req.day}</div>
                                     <span
                                         className="flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs text-white"
                                         style={{ backgroundColor: req.color, }}
@@ -145,7 +173,7 @@ export default function Dashboard() {
                                         className="flex items-center justify-center w-3 h-3 rounded-full font-bold text-xs text-white"
                                         style={{ backgroundColor: req.color, }}
                                     ></span>    
-                                    <div className=" font-light text-xs text-gray-900">{req.legend}</div>
+                                    <div className=" font-light text-xs text-gray-500">{req.legend}</div>
                             </div>
                             ))}
                         </div>
