@@ -78,11 +78,11 @@ export default function Dashboard() {
                                 <h2 className="font-['Segoe_UI'] font-bold text-gray-900">Leave Balance</h2>
 
                             </div>
-                            {/* <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1">
 
                                 <Plus size={14} className="text-blue-500" />
                                 <h2 className="text-xs text-blue-500">Apply for leave</h2>
-                            </div> */}
+                            </div>
                         </div>
                         <div className="max-h-[280px] flex gap-2">
                             {[
