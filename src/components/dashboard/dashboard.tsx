@@ -20,11 +20,40 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useEffect, useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator"
 import { Bell, Settings, Calendar, File, FileCheck, FileText, Plus } from "lucide-react";
 
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  if (match) return match[2];
+  return null;
+}
+
 export default function Dashboard() {
+      const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const token = getCookie("auth_token");
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/auth/me`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      setUser(data);
+    }
+
+    fetchUser();
+  }, []);
+
+
     return (
         <div>
             <div className="flex justify-between items-center p-4">
@@ -34,8 +63,8 @@ export default function Dashboard() {
                         <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="font-semibold">Louell Grey Miones</p>
-                        <p className="text-xs text-[#6C6767]">ERP - Software Engineer</p>
+                        <p className="font-semibold">{user?.email ?? "User"}</p>
+                        <p className="text-xs text-[#6C6767]">Software Engineer</p>
                     </div>
                 </div>
                 <div className="flex gap-4 ">
@@ -61,7 +90,7 @@ export default function Dashboard() {
             <Separator />
 
             <div className="justify-start p-4">
-                <p className="text-lg font-semibold">Welcome back, Louell Grey! 👋</p>
+                <p className="text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
                 <p className="text-xs text-[#6C6767]">Here's what's happening with your work today</p>
             </div>
             <div className="flex gap-4">
