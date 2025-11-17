@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
+import { Toaster } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -104,6 +104,7 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       </div>
+      <Toaster position="top-center" /> 
     </main>
   );
 }

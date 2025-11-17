@@ -234,6 +234,7 @@ export default function ChatHistory() {
         </div>
         <div>
           <button
+            aria-label="Exit"
             onClick={() => router.push("/")}
             className="text-white hover:opacity-80 transition cursor-pointer"
           >

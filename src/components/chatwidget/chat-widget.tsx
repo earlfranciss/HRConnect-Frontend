@@ -181,6 +181,7 @@ export default function ChatWidget() {
             <SquareArrowOutUpRight size={18} />
           </Link>
           <button
+            aria-label="Exit"
             className="text-white opacity-80 hover:opacity-100 text-xl leading-none cursor-pointer"
             onClick={close}
           >

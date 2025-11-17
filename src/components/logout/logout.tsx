@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/services/api";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -11,22 +12,13 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      // Get token from cookies
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth_token="))
-        ?.split("=")[1];
+      await api.logout(); // Call api.ts logout
 
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/auth/logout`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`, // <-- Add this
-        },
-        credentials: "include",
-      });
-
+      // Clear token cookie and localStorage
       document.cookie = "auth_token=; path=/; max-age=0";
-      console.log("Logged out successfully", document.cookie);
+      localStorage.removeItem("auth_token");
+
+      console.log("Logged out successfully");
       router.push("/login");
     } catch (err) {
       console.error("Logout failed", err);

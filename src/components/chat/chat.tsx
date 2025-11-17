@@ -206,6 +206,7 @@ export default function ChatFullScreen({
           {isChatPage ? (
             // Show first button on /chat/{conversation_id}
             <button
+              aria-label="Exit"
               onClick={() => {
                 close(); // trigger expand/close logic
                 router.push("/"); // navigate to home
@@ -217,6 +218,7 @@ export default function ChatFullScreen({
           ) : (
             // Show second button on /
             <button
+              aria-label="Exit"
               onClick={close} // just trigger expand/close logic
               className="text-white hover:opacity-80 transition cursor-pointer"
             >

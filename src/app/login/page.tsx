@@ -3,35 +3,27 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { api } from "@/services/api";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // prevent page reload
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      // Call your api.ts login function
+      const data = await api.login({ email, password });
 
-      const data = await res.json();
-      console.log(data);
-      if (res.ok) {
-        // Set cookie
+      if (data?.access_token) {
+        // Set cookie with token returned from API
         document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax;`;
 
         router.push("/");
       } else {
-        console.error(data);
+        console.error("Login failed:", data);
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -74,6 +66,7 @@ export default function LoginPage() {
               </label>
               <input
                 type="password"
+                aria-label="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder=""
