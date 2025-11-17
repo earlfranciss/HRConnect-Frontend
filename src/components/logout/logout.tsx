@@ -36,12 +36,12 @@ export default function LogoutButton() {
   };
 
   return (
-    <Button
+    <button
       onClick={handleLogout}
       disabled={loading}
-      className="cursor-pointer bg-red-500 hover:bg-red-600 text-white"
+      className="cursor-pointer text-red-500 bg-transparent p-0!"
     >
       {loading ? "Logging out..." : "Logout"}
-    </Button>
+    </button>
   );
 }
