@@ -20,6 +20,8 @@ import { Bell, Settings, } from "lucide-react";
 import LogoutButton from "../logout/logout";
 import { api } from "@/services/api";
 import Link from "next/link";
+import ApplyLeave from "./ApplyLeave";
+import { Button } from "../ui/button";
 
 interface User {
     email: string;
@@ -64,7 +66,6 @@ export default function UserHeader() {
                         <DropdownMenuContent >
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
                             <DropdownMenuItem><Link href="/chat">Chatbot</Link></DropdownMenuItem>
                             <DropdownMenuItem><LogoutButton /></DropdownMenuItem>
                         </DropdownMenuContent>
@@ -74,9 +75,14 @@ export default function UserHeader() {
 
             <Separator />
 
-            <div className="justify-start p-4">
-                <p className="text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
-                <p className="text-xs text-[#6C6767]">Here's what's happening with your work today</p>
+            <div className="flex justify-between items-center ">
+                <div className="justify-start p-4">
+                    <p className="text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
+                    <p className="text-xs text-[#6C6767]">Here's what's happening with your work today</p>
+                </div>
+                <Button className="bg-blue-500 hover:bg-blue-600">
+                    <ApplyLeave />
+                </Button>
             </div>
         </div>
 

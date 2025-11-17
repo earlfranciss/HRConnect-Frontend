@@ -1,90 +1,90 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bot, X, Send, Settings, Trash } from "lucide-react";
-import TextareaAutosize from "react-textarea-autosize";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import ChatLayout from "@/components/chat/chat-layout";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@radix-ui/react-dropdown-menu";
+import TextareaAutosize from "react-textarea-autosize";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
+  ThumbsUp,
+  ThumbsDown,
+  Send,
+  Paperclip,
+  Bot,
+  User,
+  Pencil,
+  X,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import ChatLayout from "./chat-layout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+import { useRouter, usePathname } from "next/navigation";
 
 type Message = { sender: "user" | "ai"; text: string; time: string };
 
-function getCookie(name: string) {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : null;
+interface ChatFullScreenProps {
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  close: () => void;
+  conversation_id?: string | string[];
+  onExpand: () => void;
 }
 
-export default function ChatHistory() {
-  const router = useRouter();
-  const params = useParams();
-  const conversation_id = Number(params.id); // make sure it's a number
-  const scrollRef = useRef<HTMLDivElement>(null);
+type Conversation = {
+  conversation_id: number;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
+};
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  if (match) return match[2];
+  return null;
+}
+
+export default function ChatFullScreen({
+  messages = [],
+  setMessages = () => {},
+  close = () => {},
+  onExpand = () => {},
+}: ChatFullScreenProps) {
+  const [inputHeight, setInputHeight] = useState(0);
   const [message, setMessage] = useState("");
-  const [inputHeight, setInputHeight] = useState(40);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [expand, setExpand] = useState(false);
+  const [history, setHistory] = useState<Conversation[]>([]);
 
-  const fetchChatHistory = async (id: string | number) => {
-    try {
-      setLoading(true);
-      const token = getCookie("auth_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  const router = useRouter();
 
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
+  const pathname = usePathname();
 
-      const data = await res.json();
+  const isChatPage = pathname?.startsWith("/chat/");
 
-      const mappedMessages = (data.messages || []).map(
-        (msg: any, index: number) => ({
-          sender: index % 2 === 0 ? "user" : "ai",
-          text: msg.text || msg.content || "",
-          time: new Date(msg.time || msg.created_at).toLocaleTimeString(),
-        })
-      );
-
-      setMessages(mappedMessages);
-    } catch (err) {
-      console.error("Error fetching chat history:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (conversation_id) {
-      const id = Array.isArray(conversation_id)
-        ? conversation_id[0]
-        : conversation_id;
-      fetchChatHistory(id);
-    }
-  }, [conversation_id]);
-
-  // Auto-scroll
+  // Auto-scroll to bottom
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
+  }, [messages]);
+
+  // Load from localStorage once on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("chatMessages");
+    if (saved) setMessages(JSON.parse(saved));
+  }, [setMessages]);
+
+  // Persist to localStorage whenever messages change
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);
 
   const handleSend = async () => {
@@ -134,10 +134,7 @@ export default function ChatHistory() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            question: userMessage,
-            conversation_id: conversation_id,
-          }),
+          body: JSON.stringify({ question: userMessage }),
         }
       );
 
@@ -192,33 +189,6 @@ export default function ChatHistory() {
     }
   };
 
-  const deleteChat = async (conversation_id: number) => {
-    try {
-      const token = getCookie("auth_token");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${conversation_id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        console.error("Failed to delete:", await res.text());
-        return false;
-      }
-      router.push("/chat");
-      return true;
-    } catch (err) {
-      console.error("Delete error:", err);
-      return false;
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
       {/* Header */}
@@ -233,13 +203,28 @@ export default function ChatHistory() {
           </div>
         </div>
         <div>
-          <button
-            aria-label="Exit"
-            onClick={() => router.push("/")}
-            className="text-white hover:opacity-80 transition cursor-pointer"
-          >
-            <X size={24} />
-          </button>
+          {isChatPage ? (
+            // Show first button on /chat/{conversation_id}
+            <button
+              aria-label="Exit"
+              onClick={() => {
+                close(); // trigger expand/close logic
+                router.push("/"); // navigate to home
+              }}
+              className="text-white hover:opacity-80 transition cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+          ) : (
+            // Show second button on /
+            <button
+              aria-label="Exit"
+              onClick={close} // just trigger expand/close logic
+              className="text-white hover:opacity-80 transition cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -247,7 +232,7 @@ export default function ChatHistory() {
       <div className="flex flex-1 h-full overflow-hidden">
         {/* Sidebar */}
         <div className="w-64 bg-white flex">
-          <ChatLayout onExpand={() => setIsExpanded(isExpanded)} />
+          <ChatLayout onExpand={() => setExpand(true)} />
         </div>
 
         {/* Chat Content */}
@@ -257,7 +242,7 @@ export default function ChatHistory() {
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
-            {!loading && messages.length === 0 ? (
+            {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
                 <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
                   <Bot className="text-white" size={32} />
@@ -268,6 +253,25 @@ export default function ChatHistory() {
                 <p className="text-gray-500 text-sm mb-4">
                   How can I help you today?
                 </p>
+
+                {/* <div className="grid grid-cols-3 mt-50 gap-2 w-full">
+                  {[
+                    "How can I update my personal information?",
+                    "Can I view my payslips online?",
+                    "What is the process for applying for sick leave?",
+                    "Are there any upcoming company events?",
+                    "How do I submit my timesheet for approval?",
+                    "Who can I contact for IT support?",
+                  ].map((text, i) => (
+                    <button
+                      key={i}
+                      className="flex-1 min-w-[45%] py-3 px-4 text-sm  bg-white border-[#4AADB9] border rounded-lg transition cursor-pointer"
+                      onClick={() => handleSend()}
+                    >
+                      {text}
+                    </button>
+                  ))}
+                </div> */}
               </div>
             ) : (
               <AnimatePresence initial={false}>
@@ -287,7 +291,6 @@ export default function ChatHistory() {
                         <Bot className="text-[#44B997]" size={16} />
                       </div>
                     )}
-
                     <div
                       className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm wrap-break-word whitespace-pre-wrap ${
                         msg.sender === "user"
@@ -304,8 +307,7 @@ export default function ChatHistory() {
                       ) : (
                         <p>{msg.text}</p>
                       )}
-
-                      {/* <p
+                      <p
                         className={`text-[10px] mt-1 ${
                           msg.sender === "user"
                             ? "text-[#DCF5EE]"
@@ -313,9 +315,8 @@ export default function ChatHistory() {
                         }`}
                       >
                         {msg.time}
-                      </p> */}
+                      </p>
                     </div>
-
                     {msg.sender === "user" && (
                       <Avatar>
                         <AvatarImage
@@ -334,23 +335,6 @@ export default function ChatHistory() {
           {/* Input */}
           <div className="p-4 border-t bg-white">
             <div className="flex items-end gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button className="cursor-pointer bg-transparent hover:bg-transparent">
-                    <Settings className="text-black" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0 border-none">
-                  <Button
-                    className="cursor-pointer border-nonetext-white bg-red-400 hover:bg-red-500"
-                    onClick={() => deleteChat(conversation_id)}
-                  >
-                    <Trash className="text-white" />
-                    Delete
-                  </Button>
-                </PopoverContent>
-              </Popover>
-
               <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
                 <TextareaAutosize
                   value={message}

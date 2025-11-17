@@ -1,5 +1,5 @@
 export const LEAVE_TYPES = [
-  { value: "Vacation", label: "Vacation Leave" },
-  { value: "Sick", label: "Sick Leave" },
-  { value: "Emergency", label: "Emergency Leave" },
+  { value: "Vacation Leave", label: "Vacation Leave" },
+  { value: "Sick Leave", label: "Sick Leave" },
+  { value: "Emergency Leave", label: "Emergency Leave" },
 ];
