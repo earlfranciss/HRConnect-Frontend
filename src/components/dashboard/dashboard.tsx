@@ -91,16 +91,27 @@ export default function Dashboard() {
             <PopoverContent className="">Notifications</PopoverContent>
           </Popover>
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger className="cursor-pointer">
               <Settings size={18} />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel className="cursor-pointer">
+                My Account
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuItem>Subscription</DropdownMenuItem>
+
+              <DropdownMenuItem className="cursor-pointer">
+                Billing
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Team
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Subscription
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <LogoutButton />
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -335,7 +346,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <LogoutButton />
     </div>
   );
 }
