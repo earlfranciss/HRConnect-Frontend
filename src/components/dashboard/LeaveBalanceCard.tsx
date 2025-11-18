@@ -14,6 +14,7 @@ interface LeaveRequest {
 export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: number }) {
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 
+    // Fetch all leave balance
     useEffect(() => {
         async function fetchLeaves() {
             try {
@@ -47,10 +48,10 @@ export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: n
                         <File className="text-[#9BB7FF]" />
                     </div>
                     <h2 className="font-['Segoe_UI'] font-bold text-gray-900">Leave Balance</h2>
-
                 </div>
-
             </div>
+
+            {/* Leave Balance Cards */}
             <div className="flex gap-4 w-full">
                 {leaveRequests.map((leave, i) => {
                     // Calculate remaining percentage for this leave
