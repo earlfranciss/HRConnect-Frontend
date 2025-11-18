@@ -11,14 +11,11 @@ interface LeaveHistoryItem {
   type: "Vacation Leave" | "Sick Leave" | "Emergency Leave";
 }
 
-interface RequestCardProps {
-  history: LeaveHistoryItem[];
-}
-
 export default function RequestCard({ refreshTrigger }: { refreshTrigger: number }) {
   const [approvedRequests, setApprovedRequests] = useState<LeaveHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Fetch all leave histories
   useEffect(() => {
     async function fetchHistory() {
       setLoading(true);
@@ -59,6 +56,7 @@ export default function RequestCard({ refreshTrigger }: { refreshTrigger: number
         </span>
       </div>
 
+      {/* Leave History Cards */}
       <div className="max-h-[250px] overflow-y-auto">
         {loading ? (
           <p className="text-gray-500 text-sm">Loading...</p>
@@ -108,10 +106,6 @@ export default function RequestCard({ refreshTrigger }: { refreshTrigger: number
               ))}
             </div>
           </div>
-
-
-
-
         )}
       </div>
     </div>

@@ -50,8 +50,12 @@ export default function LoginPage() {
       const data = await api.login({ email, password });
 
       if (data?.access_token) {
-        document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax;`;
-        router.push("/");
+        // Set cookie with proper options
+        document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+        
+        // CHANGED: Redirect to /dashboard instead of /
+        router.push("/dashboard");
+        router.refresh(); // Force refresh to trigger middleware
       } else {
         setLoginError("Invalid email or password.");
       }

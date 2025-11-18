@@ -35,7 +35,11 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
     const [reason, setReason] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-
+    const balanceApiMap: Record<LeaveType, () => Promise<any>> = {
+        "Emergency Leave": api.getEmergencyLeave,
+        "Vacation Leave": api.getVacationLeave,
+        "Sick Leave": api.getSickLeave,
+    };
 
     const leaveApiMap: Record<LeaveType, (data: LeaveRequestData) => Promise<any>> = {
         "Emergency Leave": api.createEmergencyLeave,
@@ -53,13 +57,28 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
         }
 
         const selectedApi = leaveApiMap[value];
-        if (!selectedApi) {
+        const getBalanceApi = balanceApiMap[value];
+
+        if (!selectedApi || !getBalanceApi) {
             toast.error("Invalid leave type.");
             return;
         }
 
         setIsSubmitting(true);
+
         try {
+            // Fetch current balance
+            const balance = await getBalanceApi();
+            const remaining = balance.total_days - balance.used_days;
+
+            // Validate User Input
+            if (days > remaining) {
+                toast.error(`Not enough balance. You have only ${remaining} day(s) left.`);
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Submit leave if valid
             await toast.promise(
                 selectedApi({ used_days: days, reason }),
                 {
@@ -69,27 +88,28 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
                 }
             );
 
+            // Reset form
             setValue("");
             setDays(1);
             setReason("");
             setDialogOpen(false);
-            onLeaveApplied?.(); 
-        } catch (err) {
-            console.error(err);
+            onLeaveApplied?.();
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Something went wrong.");
         } finally {
             setIsSubmitting(false);
         }
-
     };
+
 
 
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             {/* Button to open dialog */}
             <DialogTrigger asChild>
-
                 <h2 className="text-xs">Apply for leave</h2>
-
             </DialogTrigger>
 
             <DialogContent>

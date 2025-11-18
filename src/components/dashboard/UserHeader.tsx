@@ -45,6 +45,7 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
 
     return (
         <div>
+            {/* Top Bar - User Avatar and Settings buttons */}
             <div className="flex justify-between items-center p-4">
                 <div className="flex items-center gap-2">
                     <Avatar>
@@ -57,12 +58,15 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
                     </div>
                 </div>
                 <div className="flex gap-4 ">
+                    {/* Notifications */}
                     {/* <Popover>
                         <PopoverTrigger>
                             <Bell size={18} />
                         </PopoverTrigger>
                         <PopoverContent className="">Notifications</PopoverContent>
                     </Popover> */}
+
+                    {/* Settings */}
                     <DropdownMenu>
                         <DropdownMenuTrigger className="cursor-pointer">
                             <Settings size={18} />
@@ -78,7 +82,8 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
             </div>
 
             <Separator />
-
+            
+            {/* Welcome Message and Apply for Leave button */}
             <div className="flex justify-between items-center ">
                 <div className="justify-start p-4">
                     <p className="text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
