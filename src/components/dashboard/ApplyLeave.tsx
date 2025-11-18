@@ -17,15 +17,27 @@ import { cn } from "@/lib/utils";
 
 type LeaveType = "Emergency Leave" | "Vacation Leave" | "Sick Leave";
 
-export default function ApplyLeave() {
+type LeaveRequestData = {
+    used_days: number;
+    reason: string;
+};
+
+interface ApplyLeaveProps {
+    onLeaveApplied?: () => void;
+}
+
+
+export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
     const [openType, setOpenType] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false); 
+    const [dialogOpen, setDialogOpen] = useState(false);
     const [value, setValue] = useState<LeaveType | "">("");
     const [days, setDays] = useState(1);
     const [reason, setReason] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const leaveApiMap: Record<LeaveType, (data: { used_days: number }) => Promise<any>> = {
+
+
+    const leaveApiMap: Record<LeaveType, (data: LeaveRequestData) => Promise<any>> = {
         "Emergency Leave": api.createEmergencyLeave,
         "Vacation Leave": api.createVacationLeave,
         "Sick Leave": api.createSickLeave,
@@ -49,7 +61,7 @@ export default function ApplyLeave() {
         setIsSubmitting(true);
         try {
             await toast.promise(
-                selectedApi({ used_days: days }),
+                selectedApi({ used_days: days, reason }),
                 {
                     loading: "Submitting leave...",
                     success: "Leave request submitted!",
@@ -61,11 +73,13 @@ export default function ApplyLeave() {
             setDays(1);
             setReason("");
             setDialogOpen(false);
+            onLeaveApplied?.(); 
         } catch (err) {
             console.error(err);
         } finally {
             setIsSubmitting(false);
         }
+
     };
 
 
@@ -157,7 +171,7 @@ export default function ApplyLeave() {
                         <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" disabled={isSubmitting} className="bg-[#11C839] hover:bg-[#0faa33] text-white">
+                        <Button type="submit" disabled={isSubmitting} className="bg-blue-500 hover:bg-blue-600 text-white">
                             {isSubmitting ? "Submitting..." : "Apply Leave"}
                         </Button>
                     </DialogFooter>

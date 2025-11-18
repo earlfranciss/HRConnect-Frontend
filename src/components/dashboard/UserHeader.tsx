@@ -28,7 +28,11 @@ interface User {
     [key: string]: any;
 }
 
-export default function UserHeader() {
+interface UserHeaderProps {
+  onLeaveApplied?: () => void;
+}
+
+export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
@@ -53,12 +57,12 @@ export default function UserHeader() {
                     </div>
                 </div>
                 <div className="flex gap-4 ">
-                    <Popover>
+                    {/* <Popover>
                         <PopoverTrigger>
                             <Bell size={18} />
                         </PopoverTrigger>
                         <PopoverContent className="">Notifications</PopoverContent>
-                    </Popover>
+                    </Popover> */}
                     <DropdownMenu>
                         <DropdownMenuTrigger className="cursor-pointer">
                             <Settings size={18} />
@@ -81,7 +85,7 @@ export default function UserHeader() {
                     <p className="text-xs text-[#6C6767]">Here's what's happening with your work today</p>
                 </div>
                 <Button className="bg-blue-500 hover:bg-blue-600">
-                    <ApplyLeave />
+                    <ApplyLeave onLeaveApplied={onLeaveApplied} />
                 </Button>
             </div>
         </div>

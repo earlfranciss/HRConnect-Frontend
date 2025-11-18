@@ -80,25 +80,31 @@ export const api = {
 
   // --- Emergency Leave ---
   getEmergencyLeave: () =>
-    http("/v1/emergency-leave"),
-  updateEmergencyLeave: (data: { used_days: number }) =>
+    http("/v1/emergency-leave/balance"),
+  getEmergencyHistory: () =>
+    http("/v1/emergency-leave/history"),
+  updateEmergencyLeave: (data: { used_days: number , reason: string }) =>
     http("/v1/emergency-leave", { method: "PUT", body: JSON.stringify(data) }),
-  createEmergencyLeave: (data: { used_days: number }) =>
+  createEmergencyLeave: (data: { used_days: number , reason: string }) =>
     http("/v1/emergency-leave", { method: "POST", body: JSON.stringify(data) }),
 
   // --- Vacation Leave ---
   getVacationLeave: () =>
-    http("/v1/vacation-leave"),
-  updateVacationLeave: (data: { used_days: number }) =>
+    http("/v1/vacation-leave/balance"),
+  getVacationHistory: () =>
+    http("/v1/vacation-leave/history"),
+  updateVacationLeave: (data: { used_days: number , reason: string }) =>
     http("/v1/vacation-leave", { method: "PUT", body: JSON.stringify(data) }),
-  createVacationLeave: (data: { used_days: number }) =>
+  createVacationLeave: (data: { used_days: number , reason: string }) =>
     http("/v1/vacation-leave", { method: "POST", body: JSON.stringify(data) }),
 
   // --- Sick Leave ---
   getSickLeave: () =>
-    http("/v1/sick-leave"),
-  updateSickLeave: (data: { used_days: number }) =>
+    http("/v1/sick-leave/balance"),
+  getSickHistory: () =>
+    http("/v1/sick-leave/history"),
+  updateSickLeave: (data: { used_days: number , reason: string }) =>
     http("/v1/sick-leave", { method: "PUT", body: JSON.stringify(data) }),
-  createSickLeave: (data: { used_days: number }) =>
+  createSickLeave: (data: { used_days: number , reason: string }) =>
     http("/v1/sick-leave", { method: "POST", body: JSON.stringify(data) }),
 };
