@@ -1,24 +1,26 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import UserHeader from "./UserHeader";
 import LeaveBalanceCard from "./LeaveBalanceCard";
-import ApprovedRequestCard from "./ApprovedRequestCard";
+import RequestCard from "./RequestCard";
 import PendingRequestCard from "./PendingRequestCard";
 
 export default function Dashboard() {
+  const [refreshLeaves, setRefreshLeaves] = useState(0);
+
   return (
     <div className="flex flex-col gap-4 h-screen overflow-y-auto">
-      <UserHeader />
+      <UserHeader onLeaveApplied={() => setRefreshLeaves(prev => prev + 1)} />
 
       <div className="flex flex-col gap-4 w-full">
         {/* Top section */}
-        <LeaveBalanceCard />
+        <LeaveBalanceCard refreshTrigger={refreshLeaves} />
 
         {/* Bottom section */}
         <div className="flex gap-4">
-          <ApprovedRequestCard className="w-full" />
-          <PendingRequestCard className="w-full" />
+          <RequestCard refreshTrigger={refreshLeaves} />
         </div>
       </div>
     </div>

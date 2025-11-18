@@ -7,30 +7,27 @@ import { api } from "@/services/api";
 interface LeaveRequest {
     total_days: number;
     used_days: number;
-    type: "Emergency Leave" | "Vacation Leave" | "Sick Leave";
+    type: "Vacation Leave" | "Sick Leave" | "Emergency Leave" ;
 }
 
 
-export default function LeaveBalanceCard() {
+export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: number }) {
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 
     useEffect(() => {
         async function fetchLeaves() {
             try {
-                // Fetch all leave types
-                const [emergency, vacation, sick] = await Promise.all([
-                    api.getEmergencyLeave(),
+                const [vacation, sick, emergency] = await Promise.all([
                     api.getVacationLeave(),
                     api.getSickLeave(),
+                    api.getEmergencyLeave(),
                 ]);
 
-                // Transform into unified format
                 const leaves = [
-                    { ...emergency, type: "Emergency Leave" },
                     { ...vacation, type: "Vacation Leave" },
                     { ...sick, type: "Sick Leave" },
+                    { ...emergency, type: "Emergency Leave" },
                 ];
-
 
                 setLeaveRequests(leaves);
             } catch (err) {
@@ -39,7 +36,7 @@ export default function LeaveBalanceCard() {
         }
 
         fetchLeaves();
-    }, []);
+    }, [refreshTrigger]);
 
 
     return (
