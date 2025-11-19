@@ -34,6 +34,7 @@ import { api } from "@/services/api";
 interface ChatLayoutProps {
   onExpand: () => void;
   setConversationId: (id: number | null) => void;
+  refreshTrigger?: number; // Add refresh trigger prop
 }
 
 type Conversation = {
@@ -50,7 +51,7 @@ function getCookie(name: string) {
   return null;
 }
 
-export default function ChatLayout({ onExpand, setConversationId }: ChatLayoutProps) {
+export default function ChatLayout({ onExpand, setConversationId, refreshTrigger }: ChatLayoutProps) {
 
   const [history, setHistory] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -87,9 +88,17 @@ export default function ChatLayout({ onExpand, setConversationId }: ChatLayoutPr
     }
   };
 
+  // Initial load
   useEffect(() => {
     chatHistory();
   }, []);
+
+  // Refresh when trigger changes
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      chatHistory();
+    }
+  }, [refreshTrigger]);
 
   const handleDelete = async (conversation_id: number) => {
     if (loading) return;

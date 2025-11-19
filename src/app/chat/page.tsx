@@ -21,6 +21,7 @@ export default function ChatPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [lastFetchedId, setLastFetchedId] = useState<number | null>(null);
+  const [refreshHistory, setRefreshHistory] = useState(0); // Add refresh trigger state
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -140,9 +141,16 @@ export default function ChatPage() {
       const data: any = await api.query(messageToSend, conversationId ?? undefined);
 
       if (data?.conversation_id) {
+        const isNewConversation = conversationId !== data.conversation_id;
+        
         setConversationId(data.conversation_id);
         // Update lastFetchedId to prevent re-fetching
         setLastFetchedId(data.conversation_id);
+        
+        // Trigger history refresh if this is a new conversation
+        if (isNewConversation) {
+          setRefreshHistory(prev => prev + 1);
+        }
       }
 
       removeTypingIndicator();
@@ -175,6 +183,8 @@ export default function ChatPage() {
       setConversationId(null);
       setLastFetchedId(null);
       router.push("/chat");
+      // Refresh history after deletion
+      setRefreshHistory(prev => prev + 1);
     } catch (err) {
       console.error("Delete error:", err);
     }
@@ -209,6 +219,7 @@ export default function ChatPage() {
           <ChatLayout
             onExpand={() => setIsExpanded(!isExpanded)}
             setConversationId={setConversationId}
+            refreshTrigger={refreshHistory} // Pass refresh trigger to ChatLayout
           />
         </div>
 
