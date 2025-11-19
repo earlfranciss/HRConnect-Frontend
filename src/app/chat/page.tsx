@@ -2,46 +2,53 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import TextareaAutosize from "react-textarea-autosize";
-import { Bot, X, Send, Settings, Trash } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AnimatePresence } from "framer-motion";
+import { Bot, X, Settings, Trash, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import TextareaAutosize from "react-textarea-autosize";
 import ChatLayout from "@/components/chat/chat-layout";
-import { ChatStorage, Message } from "@/utils/chat-storage";
-
-function getCookie(name: string) {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : null;
-}
+import { useChatMessages } from "@/hooks/useChatMessages";
+import { ChatMessage } from "@/components/chat/ChatMessage";
+import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
+import { api } from "@/services/api";
+import { Message } from "@/utils/chat-storage";
 
 export default function ChatPage() {
   const router = useRouter();
-  const [conversationId, setConversationId] = useState<number | null>(ChatStorage.getConversationId());
-  const [messages, setMessages] = useState<Message[]>(ChatStorage.getMessages());
   const [loading, setLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
-
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isAiTyping = messages.some(msg => msg.sender === "ai" && msg.text === "Typing...");
 
-  // Persist conversationId changes
+  const {
+    messages,
+    conversationId,
+    setMessages,
+    setConversationId,
+    addMessage,
+    addTypingIndicator,
+    removeTypingIndicator,
+    clearMessages,
+    isAiTyping,
+  } = useChatMessages();
+
+  // Clear conversation on fresh login
   useEffect(() => {
-    ChatStorage.setConversationId(conversationId);
-  }, [conversationId]);
+    const isNewSession = sessionStorage.getItem("chatInitialized");
+    
+    if (!isNewSession) {
+      // New session detected - clear chat storage
+      clearMessages();
+      sessionStorage.setItem("chatInitialized", "true");
+    }
+  }, []);
 
-  // Persist messages changes
-  useEffect(() => {
-    ChatStorage.setMessages(messages);
-  }, [messages]);
-
-  // Auto-scroll
+  // Auto-scroll when messages change
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   }, [messages]);
 
@@ -50,27 +57,20 @@ export default function ChatPage() {
     if (!conversationId) setInputMessage("");
   }, [conversationId]);
 
-  // Load messages for existing conversation or new chat
+  // Load messages for existing conversation
   useEffect(() => {
     const fetchExistingChat = async (id: number) => {
       try {
         setLoading(true);
-        const token = getCookie("auth_token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-
-        const data = await res.json();
-        const mappedMessages = (data.messages || []).map((msg: any, idx: number) => ({
+        const data: any = await api.getConversation(id);
+        
+        const mappedMessages: Message[] = (data.messages || []).map((msg: any, idx: number) => ({
           sender: idx % 2 === 0 ? "user" : "ai",
           text: msg.text || msg.content || "",
-          time: new Date(msg.time || msg.created_at).toLocaleTimeString([], {
+          time: new Date(msg.time || msg.created_at || Date.now()).toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit",
-            hour12: true
+            hour12: true,
           }),
         }));
 
@@ -85,102 +85,59 @@ export default function ChatPage() {
     if (conversationId) {
       fetchExistingChat(conversationId);
     } else {
-      setMessages([]);
+      clearMessages();
       setInputMessage("");
-      ChatStorage.clear();
     }
   }, [conversationId]);
 
   const handleSend = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isAiTyping) return;
 
     const formattedTime = new Date().toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true
+      hour12: true,
     });
 
     const userMessage = inputMessage;
     setInputMessage("");
 
-    // Add user message and typing indicator
-    setMessages(prev => [
-      ...prev,
-      { sender: "user", text: userMessage, time: formattedTime },
-      { sender: "ai", text: "Typing...", time: formattedTime }
-    ]);
-
-    const token = getCookie("auth_token");
-    if (!token) {
-      console.error("No auth token found.");
-      setMessages(prev => prev.filter(msg => msg.text !== "Typing..."));
-      return;
-    }
+    // Add user message
+    addMessage({ sender: "user", text: userMessage, time: formattedTime });
+    
+    // Add typing indicator
+    addTypingIndicator(formattedTime);
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/query`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            question: userMessage,
-            conversation_id: conversationId
-          }),
-        }
-      );
+      const data: any = await api.query(userMessage, conversationId ?? undefined);
 
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      if (data?.conversation_id) {
+        setConversationId(data.conversation_id);
+      }
 
-      const data = await res.json();
-
-      if (data.conversation_id) setConversationId(data.conversation_id);
-
-      // Replace typing indicator with AI response
-      setMessages(prev => {
-        const updated = prev.filter(msg => msg.text !== "Typing...");
-        return [
-          ...updated,
-          {
-            sender: "ai",
-            text: data.answer || "Sorry, I couldn't find an answer.",
-            time: formattedTime
-          }
-        ];
+      // Remove typing indicator and add AI response
+      removeTypingIndicator();
+      addMessage({
+        sender: "ai",
+        text: data?.answer || "Sorry, I couldn't find an answer.",
+        time: formattedTime,
       });
     } catch (err) {
       console.error("Error sending message:", err);
 
-      setMessages(prev => {
-        const updated = prev.filter(msg => msg.text !== "Typing...");
-        return [
-          ...updated,
-          {
-            sender: "ai",
-            text: "Oops! Something went wrong. Please try again later.",
-            time: formattedTime
-          }
-        ];
+      // Remove typing indicator and show error
+      removeTypingIndicator();
+      addMessage({
+        sender: "ai",
+        text: "Oops! Something went wrong. Please try again later.",
+        time: formattedTime,
       });
     }
   };
 
-  const deleteChat = async (id: number) => {
+  const handleDeleteChat = async (id: number) => {
     try {
-      const token = getCookie("auth_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to delete conversation");
-
+      await api.deleteConversation(id);
       router.push("/chat");
     } catch (err) {
       console.error("Delete error:", err);
@@ -227,66 +184,11 @@ export default function ChatPage() {
             className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
             {!loading && messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
-                  <Bot className="text-white" size={32} />
-                </div>
-                <h2 className="text-lg font-semibold mt-5 mb-1">
-                  Hello! I'm Aiva your assistant.
-                </h2>
-                <p className="text-gray-500 text-sm mb-4">
-                  How can I help you today?
-                </p>
-              </div>
+              <ChatEmptyState title="Hello! I'm Aiva your assistant." />
             ) : (
               <AnimatePresence initial={false}>
                 {messages.map((msg, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.25 }}
-                    className={`flex items-end space-x-2 ${
-                      msg.sender === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {msg.sender === "ai" && (
-                      <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
-                        <Bot className="text-[#44B997]" size={16} />
-                      </div>
-                    )}
-
-                    <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap wrap-break-word ${
-                        msg.sender === "user"
-                          ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
-                          : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
-                      }`}
-                    >
-                      {msg.text === "Typing..." ? (
-                        <div className="flex items-center space-x-1">
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.2s]" />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.1s]" />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                        </div>
-                      ) : (
-                        <p>{msg.text}</p>
-                      )}
-                      <p className={`text-[10px] mt-1 ${
-                        msg.sender === "user" ? "text-[#DCF5EE]" : "text-gray-400"
-                      }`}>
-                        {msg.time}
-                      </p>
-                    </div>
-
-                    {msg.sender === "user" && (
-                      <Avatar>
-                        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                        <AvatarFallback>CN</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </motion.div>
+                  <ChatMessage key={i} message={msg} showTime />
                 ))}
               </AnimatePresence>
             )}
@@ -305,7 +207,7 @@ export default function ChatPage() {
                   <PopoverContent className="w-full p-0 border-none">
                     <Button
                       className="cursor-pointer bg-red-400 hover:bg-red-500 text-white"
-                      onClick={() => deleteChat(conversationId)}
+                      onClick={() => handleDeleteChat(conversationId)}
                     >
                       <Trash className="mr-2" /> Delete
                     </Button>
