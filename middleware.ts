@@ -19,22 +19,11 @@ export async function middleware(req: NextRequest) {
 
   console.log("🔍 Middleware executed for:", pathname, "| Token exists:", !!token);
 
-//   // ROOT → redirect based on token
-//   if (pathname === "/") {
-//     if (!token) {
-//       console.log("❌ No token, redirecting to /login");
-//       return NextResponse.redirect(new URL("/login", req.url));
-//     }
-    
-//     const isValid = await verifyToken(token);
-//     if (isValid) {
-//       console.log("✅ Token valid, redirecting to /dashboard");
-//       return NextResponse.redirect(new URL("/dashboard", req.url));
-//     } else {
-//       console.log("❌ Invalid token, redirecting to /login");
-//       return NextResponse.redirect(new URL("/login", req.url));
-//     }
-//   }
+  // ROOT (/) → public landing page, allow access for everyone
+  if (pathname === "/") {
+    console.log("➡️ Allowing access to public landing page");
+    return NextResponse.next();
+  }
 
   // LOGIN page → redirect if token valid
   if (pathname === "/login") {
