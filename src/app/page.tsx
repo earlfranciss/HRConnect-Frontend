@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Header from "@/components/landingPage/Header";
 import Highlight from "@/components/landingPage/Highlight";
-import { Feather } from "lucide-react";
 import HowItWorks from "@/components/landingPage/HowItWorks";
 import Features from "@/components/landingPage/Features";
 import Footer from "@/components/landingPage/Footer";

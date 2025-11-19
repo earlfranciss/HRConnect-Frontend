@@ -8,7 +8,12 @@ export function AuthChecker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname === "/login") return;
+    // Skip auth check for public routes
+    const publicRoutes = ["/", "/login"];
+    if (publicRoutes.includes(pathname)) {
+      console.log("Public route, skipping auth check");
+      return;
+    }
 
     const checkAuth = () => {
       const cookies = document.cookie.split(";");
@@ -17,7 +22,7 @@ export function AuthChecker() {
       );
       const token = authCookie?.split("=")[1];
 
-      if (!token && pathname !== "/login") {
+      if (!token) {
         console.log("⚠️ No auth token, redirecting to /login");
         router.push("/login");
         router.refresh();
