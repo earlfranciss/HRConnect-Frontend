@@ -16,6 +16,7 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { SuggestedPrompts } from "@/components/chatwidget/SuggestedPrompts";
 
 interface ChatWidgetProps {
   onClose: () => void;
@@ -55,8 +56,9 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
     });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!inputMessage.trim() || isAiTyping) return;
+  const handleSend = async (message?: string) => {
+    const messageToSend = message || inputMessage;
+    if (!messageToSend.trim() || isAiTyping) return;
 
     const formattedTime = new Date().toLocaleTimeString([], {
       hour: "numeric",
@@ -64,17 +66,16 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
       hour12: true,
     });
 
-    const userMessage = inputMessage;
     setInputMessage("");
 
     // Add user message
-    addMessage({ sender: "user", text: userMessage, time: formattedTime });
+    addMessage({ sender: "user", text: messageToSend, time: formattedTime });
     
     // Add typing indicator
     addTypingIndicator(formattedTime);
 
     try {
-      const data: any = await api.query(userMessage, conversationId ?? undefined);
+      const data: any = await api.query(messageToSend, conversationId ?? undefined);
 
       if (data?.conversation_id) {
         setConversationId(data.conversation_id);
@@ -106,6 +107,10 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
         }),
       });
     }
+  };
+
+  const handlePromptClick = (prompt: string) => {
+    handleSend(prompt);
   };
 
   return (
@@ -163,12 +168,19 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
         </CardContent>
       )}
 
+      {/* Suggested Prompts - Only show when no messages */}
+      {messages.length === 0 && (
+        <div className="px-4 py-1 flex justify-center">
+          <SuggestedPrompts onPromptClick={handlePromptClick} maxHeight="200px" />
+        </div>
+      )}
+
       {/* Footer - Input Area */}
-      <CardFooter className="flex items-center border-t bg-white px-3 py-5">
+      <CardFooter className="flex items-center border-t bg-white px-3 py-3!">
         <ChatInput
           value={inputMessage}
           onChange={setInputMessage}
-          onSend={handleSend}
+          onSend={() => handleSend()}
           disabled={isAiTyping}
         />
       </CardFooter>

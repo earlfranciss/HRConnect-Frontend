@@ -11,14 +11,16 @@ import ChatLayout from "@/components/chat/chat-layout";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
+import { SuggestedPromptFull } from "@/components/chat/SuggestedPromptFull";
 import { api } from "@/services/api";
-import { Message } from "@/utils/chat-storage";
+import { Message, ChatStorage } from "@/utils/chat-storage";
 
 export default function ChatPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [lastFetchedId, setLastFetchedId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -38,11 +40,10 @@ export default function ChatPage() {
     const isNewSession = sessionStorage.getItem("chatInitialized");
     
     if (!isNewSession) {
-      // New session detected - clear chat storage
       clearMessages();
       sessionStorage.setItem("chatInitialized", "true");
     }
-  }, []);
+  }, [clearMessages]);
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -52,29 +53,62 @@ export default function ChatPage() {
     });
   }, [messages]);
 
-  // Clear input field for new chat
+  // Clear input field and reset state for new chat
   useEffect(() => {
-    if (!conversationId) setInputMessage("");
-  }, [conversationId]);
+    if (!conversationId) {
+      setInputMessage("");
+      setLastFetchedId(null);
+      setLoading(false);
+      clearMessages(); // Clear messages when starting a new chat
+    }
+  }, [conversationId, clearMessages]);
 
   // Load messages for existing conversation
   useEffect(() => {
     const fetchExistingChat = async (id: number) => {
+      // If we already fetched this conversation, skip
+      if (lastFetchedId === id) {
+        return;
+      }
+
       try {
         setLoading(true);
+        
+        // Check if we have messages from the SAME conversation in localStorage
+        const storedConversationId = ChatStorage.getConversationId();
+        const storedMessages = ChatStorage.getMessages();
+        
+        // Only use localStorage if:
+        // 1. It's the same conversation
+        // 2. We haven't explicitly clicked to switch to it (lastFetchedId check above handles this)
+        // 3. It has messages
+        if (storedConversationId === id && storedMessages.length > 0 && lastFetchedId === null) {
+          setMessages(storedMessages);
+          setLastFetchedId(id);
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch from backend
         const data: any = await api.getConversation(id);
         
-        const mappedMessages: Message[] = (data.messages || []).map((msg: any, idx: number) => ({
-          sender: idx % 2 === 0 ? "user" : "ai",
-          text: msg.text || msg.content || "",
-          time: new Date(msg.time || msg.created_at || Date.now()).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }),
-        }));
+        const mappedMessages: Message[] = (data.messages || []).map((msg: any, idx: number) => {
+          const isUserMessage = idx % 2 === 0;
+          
+          return {
+            sender: isUserMessage ? "user" : "ai",
+            text: msg.content || msg.text || "",
+            time: new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            isError: msg.isError || false,
+          };
+        });
 
         setMessages(mappedMessages);
+        setLastFetchedId(id);
       } catch (err) {
         console.error("Error fetching chat history:", err);
       } finally {
@@ -84,14 +118,12 @@ export default function ChatPage() {
 
     if (conversationId) {
       fetchExistingChat(conversationId);
-    } else {
-      clearMessages();
-      setInputMessage("");
     }
-  }, [conversationId]);
+  }, [conversationId, setMessages, lastFetchedId]);
 
-  const handleSend = async () => {
-    if (!inputMessage.trim() || isAiTyping) return;
+  const handleSend = async (message?: string) => {
+    const messageToSend = message || inputMessage;
+    if (!messageToSend.trim() || isAiTyping) return;
 
     const formattedTime = new Date().toLocaleTimeString([], {
       hour: "numeric",
@@ -99,23 +131,20 @@ export default function ChatPage() {
       hour12: true,
     });
 
-    const userMessage = inputMessage;
     setInputMessage("");
 
-    // Add user message
-    addMessage({ sender: "user", text: userMessage, time: formattedTime });
-    
-    // Add typing indicator
+    addMessage({ sender: "user", text: messageToSend, time: formattedTime });
     addTypingIndicator(formattedTime);
 
     try {
-      const data: any = await api.query(userMessage, conversationId ?? undefined);
+      const data: any = await api.query(messageToSend, conversationId ?? undefined);
 
       if (data?.conversation_id) {
         setConversationId(data.conversation_id);
+        // Update lastFetchedId to prevent re-fetching
+        setLastFetchedId(data.conversation_id);
       }
 
-      // Remove typing indicator and add AI response
       removeTypingIndicator();
       addMessage({
         sender: "ai",
@@ -125,19 +154,26 @@ export default function ChatPage() {
     } catch (err) {
       console.error("Error sending message:", err);
 
-      // Remove typing indicator and show error
       removeTypingIndicator();
       addMessage({
         sender: "ai",
-        text: "Oops! Something went wrong. Please try again later.",
+        text: "Oops! Something went wrong. An unexpected error occurred while processing your request. Please give me a moment and try again.",
         time: formattedTime,
+        isError: true,
       });
     }
+  };
+
+  const handlePromptClick = (prompt: string) => {
+    handleSend(prompt);
   };
 
   const handleDeleteChat = async (id: number) => {
     try {
       await api.deleteConversation(id);
+      clearMessages();
+      setConversationId(null);
+      setLastFetchedId(null);
       router.push("/chat");
     } catch (err) {
       console.error("Delete error:", err);
@@ -184,7 +220,9 @@ export default function ChatPage() {
             className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           >
             {!loading && messages.length === 0 ? (
-              <ChatEmptyState title="Hello! I'm Aiva your assistant." />
+              <ChatEmptyState 
+                title="Hello! I'm Aiva your assistant."
+              />
             ) : (
               <AnimatePresence initial={false}>
                 {messages.map((msg, i) => (
@@ -193,6 +231,13 @@ export default function ChatPage() {
               </AnimatePresence>
             )}
           </div>
+
+          {/* Suggested Prompts */}
+          {!loading && messages.length === 0 && (
+            <div className="px-6 py-3 flex justify-center">
+              <SuggestedPromptFull onPromptClick={handlePromptClick} maxHeight="300px" />
+            </div>
+          )}
 
           {/* Input */}
           <div className="p-4 border-t bg-white">
@@ -233,7 +278,7 @@ export default function ChatPage() {
               </div>
 
               <Button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 className={`bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] rounded-full p-3 ${
                   isAiTyping ? "cursor-not-allowed pointer-events-none" : ""
                 }`}

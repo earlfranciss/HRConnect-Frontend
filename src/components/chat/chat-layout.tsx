@@ -58,6 +58,7 @@ export default function ChatLayout({ onExpand, setConversationId }: ChatLayoutPr
   const params = useParams();
   const conversation_id = params?.id;
   const [open, setOpen] = useState(false);
+  
   const chatHistory = async () => {
     try {
       const token = getCookie("auth_token");
@@ -108,18 +109,28 @@ export default function ChatLayout({ onExpand, setConversationId }: ChatLayoutPr
     }
   };
 
+  const handleNewChat = () => {
+    // Clear localStorage first
+    localStorage.removeItem("conversationId");
+    localStorage.removeItem("chatMessages");
+    
+    // Set conversation ID to null - this will trigger the useEffect in ChatPage
+    setConversationId(null);
+    
+    // Navigate to chat page
+    router.push("/chat");
+    
+    // Call onExpand if needed
+    onExpand?.();
+  };
+
   return (
     <div className="flex w-full bg-white  h-screen">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-linear-to-b from-[#44B997] to-[#4AADB9] text-white py-2 px-4">
         {/* New chat button */}
         <Button
-          onClick={() => {
-            onExpand?.();
-            setConversationId(null);
-            router.push("/chat");
-            localStorage.removeItem("chatMessages");
-          }}
+          onClick={handleNewChat}
           className="flex justify-start gap-2 bg-gray-100 text-black text-sm rounded-lg p-6 cursor-pointer hover:bg-gray-200 border border-[#4AADB9]"
         >
           <Plus className="w-4 h-4" />

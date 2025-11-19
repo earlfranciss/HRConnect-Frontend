@@ -14,20 +14,33 @@ interface UseChatMessagesReturn {
 }
 
 export function useChatMessages(): UseChatMessagesReturn {
-  const [conversationId, setConversationId] = useState<number | null>(
-    ChatStorage.getConversationId()
-  );
-  const [messages, setMessages] = useState<Message[]>(ChatStorage.getMessages());
+  // Initialize with null/empty array to prevent hydration mismatch
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from localStorage only on client side after mount
+  useEffect(() => {
+    if (!isInitialized) {
+      setConversationId(ChatStorage.getConversationId());
+      setMessages(ChatStorage.getMessages());
+      setIsInitialized(true);
+    }
+  }, [isInitialized]);
 
   // Persist conversationId changes
   useEffect(() => {
-    ChatStorage.setConversationId(conversationId);
-  }, [conversationId]);
+    if (isInitialized) {
+      ChatStorage.setConversationId(conversationId);
+    }
+  }, [conversationId, isInitialized]);
 
-  // Persist messages changes
+  // Persist messages changes (including error messages)
   useEffect(() => {
-    ChatStorage.setMessages(messages);
-  }, [messages]);
+    if (isInitialized) {
+      ChatStorage.setMessages(messages);
+    }
+  }, [messages, isInitialized]);
 
   const addMessage = (message: Message) => {
     setMessages((prev) => [...prev, message]);
@@ -43,6 +56,7 @@ export function useChatMessages(): UseChatMessagesReturn {
 
   const clearMessages = () => {
     setMessages([]);
+    setConversationId(null);
     ChatStorage.clear();
   };
 

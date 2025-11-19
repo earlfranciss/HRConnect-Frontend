@@ -1,6 +1,6 @@
 const isBrowser = typeof window !== "undefined";
 
-export type Message = { sender: "user" | "ai"; text: string; time: string };
+export type Message = { sender: "user" | "ai"; text: string; time: string; isError?: boolean; };
 
 
 // Stores the selected conversation id
