@@ -11,7 +11,7 @@ interface SuggestedPromptsGridProps {
 const defaultPrompts = [
   "How many leave credits do I have left?",
   "What is the policy for filing a leave?",
-  "When is the payout schedule release date?",
+  "When is the payout schedule / payroll release date?",
   "What are the company benefits?",
   "How do I apply for a leave?",
   "Can unused leave be converted to cash?",
