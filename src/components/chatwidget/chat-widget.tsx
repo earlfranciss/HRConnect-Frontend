@@ -117,7 +117,7 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
     <Card className="p-0 border-none h-full flex flex-col">
       {/* Header */}
       <CardHeader className="bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white flex items-center justify-between py-3 px-4">
-        <Link href="/chat" className="flex items-center space-x-2">
+        <Link href={conversationId ? `/chat?id=${conversationId}` : "/chat"} className="flex items-center space-x-2">
           <div className="bg-white p-2 rounded-full">
             <Bot className="text-[#44B997]" size={22} />
           </div>
@@ -131,7 +131,7 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/chat"
+            href={conversationId ? `/chat?id=${conversationId}` : "/chat"}
             className={`text-white opacity-80 hover:opacity-100 text-xl leading-none ${
               isAiTyping ? "cursor-not-allowed pointer-events-none" : "cursor-pointer"
             }`}
