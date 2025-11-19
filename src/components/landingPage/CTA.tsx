@@ -24,7 +24,7 @@ export default function CTA() {
             </Button>
             <Button size="lg" variant="outline" className="border-white text-[#44B997] hover:bg-white/10 text-lg px-8">
               <Link
-                href="/login">
+                href="/register">
                 Get Started
               </Link>
               <ChevronRight className="ml-2 h-5 w-5" />

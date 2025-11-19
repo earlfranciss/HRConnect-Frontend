@@ -37,7 +37,7 @@ export default function Highlight() {
             </Button>
             <Button size="lg" className="bg-gradient-to-r from-[#44B997] to-[#4AADB9] hover:from-[#3da888] hover:to-[#429ca8] text-lg px-8">
               <Link
-                href="/login">
+                href="/register">
                 Get Started
               </Link>
               <ChevronRight className="ml-2 h-5 w-5" />

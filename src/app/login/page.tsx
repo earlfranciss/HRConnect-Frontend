@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -52,7 +53,7 @@ export default function LoginPage() {
       if (data?.access_token) {
         // Set cookie with proper options
         document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
-        
+
         // CHANGED: Redirect to /dashboard instead of /
         router.push("/dashboard");
         router.refresh(); // Force refresh to trigger middleware
@@ -85,9 +86,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@email.com"
-                className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${
-                  emailError ? "border-red-500" : ""
-                }`}
+                className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${emailError ? "border-red-500" : ""
+                  }`}
                 required
               />
               <p className="text-sm text-red-500 mt-1 h-4">{emailError}</p>
@@ -102,9 +102,8 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="*****"
-                className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${
-                  passwordError ? "border-red-500" : ""
-                }`}
+                className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${passwordError ? "border-red-500" : ""
+                  }`}
                 required
               />
               <p className="text-sm text-red-500 mt-1 h-4">{passwordError}</p>
@@ -123,6 +122,13 @@ export default function LoginPage() {
             Login
           </button>
         </form>
+        <p className="text-sm mt-6 text-gray-500">Don't have an account? 
+          <Link
+            href="/register"
+            className="m-2 text-green-600">
+              Register
+          </Link>
+        </p>
       </div>
 
       <div className="relative hidden md:block md:w-[60%] h-full">
