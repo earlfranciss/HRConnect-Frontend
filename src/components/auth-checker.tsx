@@ -9,7 +9,7 @@ export function AuthChecker() {
 
   useEffect(() => {
     // Skip auth check for public routes
-    const publicRoutes = ["/", "/login"];
+    const publicRoutes = ["/", "/login", "/register"];
     if (publicRoutes.includes(pathname)) {
       console.log("Public route, skipping auth check");
       return;

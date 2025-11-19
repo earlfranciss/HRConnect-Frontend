@@ -35,7 +35,7 @@ export default function Header() {
                         How It Works
                     </a>
                     <Link
-                        href="/login" className="bg-gradient-to-r from-[#44B997] to-[#4AADB9] hover:from-[#3da888] hover:to-[#429ca8] border border-gray-300 px-2 p-1 rounded-sm">
+                        href="/register" className="bg-gradient-to-r from-[#44B997] to-[#4AADB9] hover:from-[#3da888] hover:to-[#429ca8] border border-gray-300 px-2 p-1 rounded-sm">
                         Get Started
                     </Link>
                 </nav>

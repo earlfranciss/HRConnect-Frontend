@@ -62,6 +62,8 @@ export const api = {
       method: "POST",
     })
   ,
+  register: (credentials: { email: string; password: string }) =>
+    http("/v1/auth/register", { method: "POST", body: JSON.stringify(credentials) }),
   validate: () =>
     http<{ email: string }>("/v1/auth/me", { method: "GET" }),
 
@@ -83,9 +85,9 @@ export const api = {
     http("/v1/emergency-leave/balance"),
   getEmergencyHistory: () =>
     http("/v1/emergency-leave/history"),
-  updateEmergencyLeave: (data: { used_days: number , reason: string }) =>
+  updateEmergencyLeave: (data: { used_days: number, reason: string }) =>
     http("/v1/emergency-leave", { method: "PUT", body: JSON.stringify(data) }),
-  createEmergencyLeave: (data: { used_days: number , reason: string }) =>
+  createEmergencyLeave: (data: { used_days: number, reason: string }) =>
     http("/v1/emergency-leave", { method: "POST", body: JSON.stringify(data) }),
 
   // --- Vacation Leave ---
@@ -93,9 +95,9 @@ export const api = {
     http("/v1/vacation-leave/balance"),
   getVacationHistory: () =>
     http("/v1/vacation-leave/history"),
-  updateVacationLeave: (data: { used_days: number , reason: string }) =>
+  updateVacationLeave: (data: { used_days: number, reason: string }) =>
     http("/v1/vacation-leave", { method: "PUT", body: JSON.stringify(data) }),
-  createVacationLeave: (data: { used_days: number , reason: string }) =>
+  createVacationLeave: (data: { used_days: number, reason: string }) =>
     http("/v1/vacation-leave", { method: "POST", body: JSON.stringify(data) }),
 
   // --- Sick Leave ---
@@ -103,8 +105,8 @@ export const api = {
     http("/v1/sick-leave/balance"),
   getSickHistory: () =>
     http("/v1/sick-leave/history"),
-  updateSickLeave: (data: { used_days: number , reason: string }) =>
+  updateSickLeave: (data: { used_days: number, reason: string }) =>
     http("/v1/sick-leave", { method: "PUT", body: JSON.stringify(data) }),
-  createSickLeave: (data: { used_days: number , reason: string }) =>
+  createSickLeave: (data: { used_days: number, reason: string }) =>
     http("/v1/sick-leave", { method: "POST", body: JSON.stringify(data) }),
 };
