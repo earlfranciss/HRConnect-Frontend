@@ -205,7 +205,7 @@ export default function ChatPage() {
         </div>
         <button
           aria-label="Exit"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/dashboard")}
           className="text-white hover:opacity-80"
         >
           <X size={24} />
