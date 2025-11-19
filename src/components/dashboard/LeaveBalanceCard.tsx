@@ -66,8 +66,8 @@ export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: n
                                 : "bg-blue-500";
 
                     return (
-                        <div key={i} className="flex-1 p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3">
-                            <div className="flex justify-between gap-8 items-center mb-2">
+                        <div key={i} className="flex-1 p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 ">
+                            <div className="flex justify-between gap-4 items-center mb-2">
                                 <span className="font-['Segoe_UI'] font-semibold text-sm text-gray-600">{leave.type}</span>
                                 <div>
                                     <span className="font-['Segoe_UI'] font-bold text-[17.4px] text-gray-900">{leave.total_days - leave.used_days}</span>

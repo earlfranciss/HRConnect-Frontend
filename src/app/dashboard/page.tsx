@@ -25,7 +25,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <main className="h-screen w-full bg-[#FDFDFD] overflow-hidden">
+    <main className="h-screen w-full bg-[#FDFDFD] overflow-y-auto">
       <div className="w-full flex items-center justify-center flex-col gap-2">
         <Dashboard />
       </div>

@@ -36,16 +36,6 @@ export default function ChatPage() {
     isAiTyping,
   } = useChatMessages();
 
-  // Clear conversation on fresh login
-  useEffect(() => {
-    const isNewSession = sessionStorage.getItem("chatInitialized");
-    
-    if (!isNewSession) {
-      clearMessages();
-      sessionStorage.setItem("chatInitialized", "true");
-    }
-  }, [clearMessages]);
-
   // Auto-scroll when messages change
   useEffect(() => {
     scrollRef.current?.scrollTo({
