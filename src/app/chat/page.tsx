@@ -1,66 +1,114 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useParams, useRouter, usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import TextareaAutosize from "react-textarea-autosize";
-import { Bot, X, Send, Settings, Trash } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
+import { Bot, X, Settings, Trash, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import TextareaAutosize from "react-textarea-autosize";
 import ChatLayout from "@/components/chat/chat-layout";
-
-type Message = { sender: "user" | "ai"; text: string; time: string };
-
-function getCookie(name: string) {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : null;
-}
+import { useChatMessages } from "@/hooks/useChatMessages";
+import { ChatMessage } from "@/components/chat/ChatMessage";
+import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
+import { SuggestedPromptFull } from "@/components/chat/SuggestedPromptFull";
+import { api } from "@/services/api";
+import { Message, ChatStorage } from "@/utils/chat-storage";
 
 export default function ChatPage() {
   const router = useRouter();
-  const params = useParams();
-  const conversationIdParam = params?.id ? Number(params.id) : null;
-
-  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
-  const [conversationId, setConversationId] = useState<number | null>(conversationIdParam);
   const [isExpanded, setIsExpanded] = useState(false);
-
+  const [lastFetchedId, setLastFetchedId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isAiTyping = messages.some(msg => msg.sender === "ai" && msg.text === "Typing...");
+  const {
+    messages,
+    conversationId,
+    setMessages,
+    setConversationId,
+    addMessage,
+    addTypingIndicator,
+    removeTypingIndicator,
+    clearMessages,
+    isAiTyping,
+  } = useChatMessages();
 
-  // Auto-scroll
+  // Clear conversation on fresh login
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    const isNewSession = sessionStorage.getItem("chatInitialized");
+    
+    if (!isNewSession) {
+      clearMessages();
+      sessionStorage.setItem("chatInitialized", "true");
+    }
+  }, [clearMessages]);
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
-  // Clear input field for new chat
+  // Clear input field and reset state for new chat
   useEffect(() => {
-    if (!conversationId) setInputMessage("");
-  }, [conversationId]);
+    if (!conversationId) {
+      setInputMessage("");
+      setLastFetchedId(null);
+      setLoading(false);
+      clearMessages(); // Clear messages when starting a new chat
+    }
+  }, [conversationId, clearMessages]);
 
-
-  // Load messages for existing conversation or new chat
+  // Load messages for existing conversation
   useEffect(() => {
     const fetchExistingChat = async (id: number) => {
+      // If we already fetched this conversation, skip
+      if (lastFetchedId === id) {
+        return;
+      }
+
       try {
         setLoading(true);
-        const token = getCookie("auth_token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
-        const mappedMessages = (data.messages || []).map((msg: any, idx: number) => ({
-          sender: idx % 2 === 0 ? "user" : "ai",
-          text: msg.text || msg.content || "",
-          time: new Date(msg.time || msg.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }),
-        }));
+        
+        // Check if we have messages from the SAME conversation in localStorage
+        const storedConversationId = ChatStorage.getConversationId();
+        const storedMessages = ChatStorage.getMessages();
+        
+        // Only use localStorage if:
+        // 1. It's the same conversation
+        // 2. We haven't explicitly clicked to switch to it (lastFetchedId check above handles this)
+        // 3. It has messages
+        if (storedConversationId === id && storedMessages.length > 0 && lastFetchedId === null) {
+          setMessages(storedMessages);
+          setLastFetchedId(id);
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch from backend
+        const data: any = await api.getConversation(id);
+        
+        const mappedMessages: Message[] = (data.messages || []).map((msg: any, idx: number) => {
+          const isUserMessage = idx % 2 === 0;
+          
+          return {
+            sender: isUserMessage ? "user" : "ai",
+            text: msg.content || msg.text || "",
+            time: new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            isError: msg.isError || false,
+          };
+        });
+
         setMessages(mappedMessages);
+        setLastFetchedId(id);
       } catch (err) {
         console.error("Error fetching chat history:", err);
       } finally {
@@ -69,84 +117,63 @@ export default function ChatPage() {
     };
 
     if (conversationId) {
-      // load existing conversation
       fetchExistingChat(conversationId);
-    } else {
-      // clear everything
-      setMessages([]);
-      setInputMessage("");
-      localStorage.removeItem("chatMessages");
     }
-  }, [conversationId]);
+  }, [conversationId, setMessages, lastFetchedId]);
 
+  const handleSend = async (message?: string) => {
+    const messageToSend = message || inputMessage;
+    if (!messageToSend.trim() || isAiTyping) return;
 
-  // Persist new chat messages to localStorage
-  useEffect(() => {
-    if (!conversationId) {
-      localStorage.setItem("chatMessages", JSON.stringify(messages));
-    }
-  }, [messages, conversationId]);
+    const formattedTime = new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
 
-  const handleSend = async () => {
-    if (!inputMessage.trim()) return;
-
-    const now = new Date();
-    const formattedTime = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
-
-    const userMessage = inputMessage;
     setInputMessage("");
 
-    // Add user message
-    setMessages(prev => [...prev, { sender: "user", text: userMessage, time: formattedTime }]);
-    // Add typing indicator
-    setMessages(prev => [...prev, { sender: "ai", text: "Typing...", time: formattedTime }]);
-
-    const token = getCookie("auth_token");
-    if (!token) {
-      console.error("No auth token found.");
-      setMessages(prev => prev.filter(msg => msg.text !== "Typing..."));
-      return;
-    }
+    addMessage({ sender: "user", text: messageToSend, time: formattedTime });
+    addTypingIndicator(formattedTime);
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/query`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ question: userMessage, conversation_id: conversationId }),
-        }
-      );
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const data = await res.json();
+      const data: any = await api.query(messageToSend, conversationId ?? undefined);
 
-      if (data.conversation_id) setConversationId(data.conversation_id);
+      if (data?.conversation_id) {
+        setConversationId(data.conversation_id);
+        // Update lastFetchedId to prevent re-fetching
+        setLastFetchedId(data.conversation_id);
+      }
 
-      setMessages(prev => {
-        const updated = [...prev];
-        const typingIndex = updated.findIndex(msg => msg.text === "Typing...");
-        if (typingIndex !== -1) updated.splice(typingIndex, 1);
-        return [...updated, { sender: "ai", text: data.answer || "Sorry, I couldn't find an answer.", time: formattedTime }];
+      removeTypingIndicator();
+      addMessage({
+        sender: "ai",
+        text: data?.answer || "Sorry, I couldn't find an answer.",
+        time: formattedTime,
       });
     } catch (err) {
       console.error("Error sending message:", err);
-      setMessages(prev => {
-        const updated = [...prev];
-        const typingIndex = updated.findIndex(msg => msg.text === "Typing...");
-        if (typingIndex !== -1) updated.splice(typingIndex, 1);
-        return [...updated, { sender: "ai", text: "Oops! Something went wrong. Please try again later.", time: formattedTime }];
+
+      removeTypingIndicator();
+      addMessage({
+        sender: "ai",
+        text: "Oops! Something went wrong. An unexpected error occurred while processing your request. Please give me a moment and try again.",
+        time: formattedTime,
+        isError: true,
       });
     }
   };
 
-  const deleteChat = async (id: number) => {
+  const handlePromptClick = (prompt: string) => {
+    handleSend(prompt);
+  };
+
+  const handleDeleteChat = async (id: number) => {
     try {
-      const token = getCookie("auth_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history/${id}`,
-        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!res.ok) throw new Error("Failed to delete conversation");
+      await api.deleteConversation(id);
+      clearMessages();
+      setConversationId(null);
+      setLastFetchedId(null);
       router.push("/chat");
     } catch (err) {
       console.error("Delete error:", err);
@@ -158,15 +185,21 @@ export default function ChatPage() {
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white shadow-md">
         <div className="flex items-center gap-2">
-          <div className="bg-white p-2 rounded-full"><Bot className="text-[#44B997]" size={22} /></div>
+          <div className="bg-white p-2 rounded-full">
+            <Bot className="text-[#44B997]" size={22} />
+          </div>
           <div>
             <h2 className="text-xl font-bold">HRConnect Aiva</h2>
             <p className="text-xs opacity-80">Online</p>
           </div>
         </div>
-        <div>
-          <button aria-label="Exit" onClick={() => router.push("/")} className="text-white hover:opacity-80"><X size={24} /></button>
-        </div>
+        <button
+          aria-label="Exit"
+          onClick={() => router.push("/")}
+          className="text-white hover:opacity-80"
+        >
+          <X size={24} />
+        </button>
       </div>
 
       {/* Layout */}
@@ -179,60 +212,32 @@ export default function ChatPage() {
           />
         </div>
 
-
         {/* Chat Content */}
         <div className="flex-1 flex flex-col bg-gray-50">
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+          >
             {!loading && messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                <div className="bg-linear-to-r from-[#44B997] to-[#4AADB9] w-16 h-16 rounded-full flex items-center justify-center">
-                  <Bot className="text-white" size={32} />
-                </div>
-                <h2 className="text-lg font-semibold mt-5 mb-1">Hello! I'm Aiva your assistant.</h2>
-                <p className="text-gray-500 text-sm mb-4">How can I help you today?</p>
-              </div>
+              <ChatEmptyState 
+                title="Hello! I'm Aiva your assistant."
+              />
             ) : (
               <AnimatePresence initial={false}>
                 {messages.map((msg, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.25 }}
-                    className={`flex items-end space-x-2 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    {msg.sender === "ai" && (
-                      <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
-                        <Bot className="text-[#44B997]" size={16} />
-                      </div>
-                    )}
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap wrap-break-word ${msg.sender === "user" ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none" : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"}`}>
-                      {msg.text === "Typing..." ? (
-                        <div className="flex items-center space-x-1">
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.2s]" />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.1s]" />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                        </div>
-                      ) : (
-                        <p>{msg.text}</p>
-                      )}
-                      <p className={`text-[10px] mt-1 ${msg.sender === "user" ? "text-[#DCF5EE]" : "text-gray-400"}`}>
-                        {msg.time}
-                      </p>
-                    </div>
-                    {msg.sender === "user" && (
-                      <Avatar>
-                        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                        <AvatarFallback>CN</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </motion.div>
+                  <ChatMessage key={i} message={msg} showTime />
                 ))}
               </AnimatePresence>
             )}
           </div>
+
+          {/* Suggested Prompts */}
+          {!loading && messages.length === 0 && (
+            <div className="px-6 py-3 flex justify-center">
+              <SuggestedPromptFull onPromptClick={handlePromptClick} maxHeight="300px" />
+            </div>
+          )}
 
           {/* Input */}
           <div className="p-4 border-t bg-white">
@@ -245,7 +250,10 @@ export default function ChatPage() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0 border-none">
-                    <Button className="cursor-pointer bg-red-400 hover:bg-red-500 text-white" onClick={() => deleteChat(conversationId)}>
+                    <Button
+                      className="cursor-pointer bg-red-400 hover:bg-red-500 text-white"
+                      onClick={() => handleDeleteChat(conversationId)}
+                    >
                       <Trash className="mr-2" /> Delete
                     </Button>
                   </PopoverContent>
@@ -270,8 +278,10 @@ export default function ChatPage() {
               </div>
 
               <Button
-                onClick={handleSend}
-                className={`bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] rounded-full p-3 ${isAiTyping ? "cursor-not-allowed pointer-events-none" : ""}`}
+                onClick={() => handleSend()}
+                className={`bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] rounded-full p-3 ${
+                  isAiTyping ? "cursor-not-allowed pointer-events-none" : ""
+                }`}
                 disabled={isAiTyping}
               >
                 <Send className="w-5 h-5" />

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
+import { ChatStorage } from "@/utils/chat-storage";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -12,11 +13,15 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await api.logout(); // Call api.ts logout
+      await api.logout();
 
       // Clear token cookie and localStorage
       document.cookie = "auth_token=; path=/; max-age=0";
       localStorage.removeItem("auth_token");
+
+      // Clear chat storage on logout
+      ChatStorage.clear();
+      sessionStorage.removeItem("chatInitialized");
 
       console.log("Logged out successfully");
       router.push("/login");

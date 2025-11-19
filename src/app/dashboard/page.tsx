@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const [show, setShow] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Remove auth check — middleware does this now
+  // Remove auth check 
   useEffect(() => {
     const timer = setTimeout(() => setShow(false), 5000);
     return () => clearTimeout(timer);
