@@ -97,48 +97,102 @@ HRConnect_Frontend/
 │       ├── login.jpg
 │       └── workflow.png
 │
-└── src/
-    ├── app/                 # Next.js routes, pages, layout
-    │   ├── favicon.ico
-    │   ├── globals.css
-    │   ├── layout.tsx
-    │   ├── page.tsx
-    │   ├── chat/            # Chat route and layout
-    │   │   ├── layout.tsx
-    │   │   └── page.tsx
-    │   └── login/           # Login page route
-    │       └── page.tsx
+└── src
+    ├── app                                    # Next.js App Router - Main application routes
+    │   ├── favicon.ico                        # Browser tab icon
+    │   ├── globals.css                        # Global CSS styles and Tailwind imports
+    │   ├── layout.tsx                         # Root layout component (wraps all pages)
+    │   ├── page.tsx                           # Landing/home page (route: /)
+    │   │
+    │   ├── chat                               # Chat feature route
+    │   │   └── page.tsx                       # Main chat interface page (route: /chat)
+    │   │
+    │   ├── dashboard                          # Dashboard route
+    │   │   └── page.tsx                       # User dashboard page (route: /dashboard)
+    │   │
+    │   ├── login                              # Authentication route
+    │   │   └── page.tsx                       # Login page (route: /login)
+    │   │
+    │   └── register                           # User registration route
+    │       └── page.tsx                       # Registration page (route: /register)
     │
-    ├── components/          # Reusable UI components
-    │   ├── app-sidebar.tsx
-    │   ├── chat/
-    │   │   ├── chat-layout.tsx
-    │   │   └── chat.tsx
-    │   ├── chatwidget/
-    │   │   └── chat-widget.tsx
-    │   ├── logout/
-    │   │   └── logout.tsx
-    │   └── ui/               # Generic UI elements
-    │       ├── avatar.tsx
-    │       ├── button.tsx
-    │       ├── card.tsx
-    │       ├── collapsible.tsx
-    │       ├── dropdown-menu.tsx
-    │       ├── input.tsx
-    │       ├── popover.tsx
-    │       ├── scroll-area.tsx
-    │       ├── separator.tsx
-    │       ├── sheet.tsx
-    │       ├── sidebar.tsx
-    │       ├── skeleton.tsx
-    │       ├── textarea.tsx
-    │       └── tooltip.tsx
+    ├── components                             # Reusable React components
+    │   ├── app-sidebar.tsx                    # Main application sidebar navigation
+    │   ├── auth-checker.tsx                   # Authentication state checker/guard component
+    │   │
+    │   ├── chat                               # Chat-related components
+    │   │   ├── chat-layout.tsx                # Layout wrapper for chat interface
+    │   │   ├── ChatEmptyState.tsx             # Empty state UI when no messages exist
+    │   │   ├── ChatInput.tsx                  # Message input field and send button
+    │   │   ├── ChatMessage.tsx                # Individual chat message bubble component
+    │   │   └── SuggestedPromptFull.tsx        # Full-size suggested prompt cards
+    │   │
+    │   ├── chatwidget                         # Chat widget components
+    │   │   ├── chat-widget.tsx                # Embeddable chat widget component
+    │   │   └── SuggestedPrompts.tsx           # Suggested prompt chips/buttons
+    │   │
+    │   ├── dashboard                          # Dashboard-related components
+    │   │   ├── ApplyLeave.tsx                 # Leave application form modal
+    │   │   ├── ApprovedRequests.tsx           # List of approved leave requests
+    │   │   ├── AttendanceCard.tsx             # Attendance summary card widget
+    │   │   ├── dashboard.tsx                  # Main dashboard layout component
+    │   │   ├── LeaveBalanceCard.tsx           # Leave balance display card
+    │   │   ├── PendingRequest.tsx             # List of pending leave requests
+    │   │   ├── RequestCard.tsx                # Individual request item card
+    │   │   └── UserHeader.tsx                 # User profile header section
+    │   │
+    │   ├── landingPage                        # Landing page sections
+    │   │   ├── Benefits.tsx                   # Benefits/advantages section
+    │   │   ├── CTA.tsx                        # Call-to-action section
+    │   │   ├── Features.tsx                   # Features showcase section
+    │   │   ├── Footer.tsx                     # Landing page footer
+    │   │   ├── Header.tsx                     # Landing page header/navbar
+    │   │   ├── Highlight.tsx                  # Highlighted content section
+    │   │   └── HowItWorks.tsx                 # How it works/process section
+    │   │
+    │   ├── logout                             # Logout functionality
+    │   │   └── logout.tsx                     # Logout button/handler component
+    │   │
+    │   └── ui                                 # Shadcn/UI component library
+    │       ├── alert-dialog.tsx               # Modal dialog for alerts/confirmations
+    │       ├── avatar.tsx                     # User avatar component
+    │       ├── badge.tsx                      # Badge/tag component
+    │       ├── button.tsx                     # Button component with variants
+    │       ├── calendar.tsx                   # Date picker calendar component
+    │       ├── card.tsx                       # Card container component
+    │       ├── collapsible.tsx                # Collapsible/accordion component
+    │       ├── command.tsx                    # Command palette/search component
+    │       ├── dialog.tsx                     # Modal dialog component
+    │       ├── dropdown-menu.tsx              # Dropdown menu component
+    │       ├── input.tsx                      # Text input field component
+    │       ├── label.tsx                      # Form label component
+    │       ├── popover.tsx                    # Popover/tooltip container
+    │       ├── scroll-area.tsx                # Custom scrollable area component
+    │       ├── separator.tsx                  # Visual divider/separator line
+    │       ├── sheet.tsx                      # Slide-out sheet/panel component
+    │       ├── sidebar.tsx                    # Sidebar layout component
+    │       ├── skeleton.tsx                   # Loading skeleton placeholder
+    │       ├── sonner.tsx                     # Toast notification component
+    │       ├── textarea.tsx                   # Multi-line text input component
+    │       └── tooltip.tsx                    # Tooltip component
     │
-    ├── hooks/               # Custom React hooks
-    │   └── use-mobile.ts
+    ├── configs                                # Configuration files
+    │   ├── colors.ts                          # Color scheme/theme configuration
+    │   └── leaveType.ts                       # Leave type definitions and constants
     │
-    └── lib/                 # Utility functions and helpers
-        └── utils.ts
+    ├── hooks                                  # Custom React hooks
+    │   ├── use-mobile.ts                      # Hook to detect mobile viewport
+    │   └── useChatMessages.ts                 # Hook for managing chat message state
+    │
+    ├── lib                                    # Utility libraries
+    │   └── utils.ts                           # Common utility functions (e.g., cn for className merging)
+    │
+    ├── services                               # API and external services
+    │   └── api.ts                             # HTTP client and API endpoint functions
+    │
+    └── utils                                  # Utility functions
+        ├── chat-storage.ts                    # Local storage utilities for chat data
+        └── message-formatter.ts               # Message formatting and parsing utilities
 
 ```
 
