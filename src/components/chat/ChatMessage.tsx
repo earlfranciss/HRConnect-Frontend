@@ -12,6 +12,7 @@ interface ChatMessageProps {
 export function ChatMessage({ message, showTime = false }: ChatMessageProps) {
   const isUser = message.sender === "user";
   const isTyping = message.text === "Typing...";
+  const isError = message.isError || false; // Check if message is an error
 
   return (
     <motion.div
@@ -25,8 +26,10 @@ export function ChatMessage({ message, showTime = false }: ChatMessageProps) {
     >
       {/* AI Avatar */}
       {!isUser && (
-        <div className="shrink-0 bg-[#E6F5F0] w-8 h-8 rounded-full flex items-center justify-center">
-          <Bot className="text-[#44B997]" size={16} />
+        <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+          isError ? "bg-red-100" : "bg-[#E6F5F0]"
+        }`}>
+          <Bot className={isError ? "text-red-500" : "text-[#44B997]"} size={16} />
         </div>
       )}
 
@@ -35,6 +38,8 @@ export function ChatMessage({ message, showTime = false }: ChatMessageProps) {
         className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap wrap-break-word ${
           isUser
             ? "bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-br-none"
+            : isError
+            ? "bg-red-50 text-red-800 border border-red-200 rounded-bl-none"
             : "bg-[#F1F5F9] text-gray-800 rounded-bl-none"
         }`}
       >
@@ -46,7 +51,7 @@ export function ChatMessage({ message, showTime = false }: ChatMessageProps) {
         
         {showTime && !isTyping && (
           <p className={`text-[10px] mt-1 ${
-            isUser ? "text-[#DCF5EE]" : "text-gray-400"
+            isUser ? "text-[#DCF5EE]" : isError ? "text-red-400" : "text-gray-400"
           }`}>
             {message.time}
           </p>
