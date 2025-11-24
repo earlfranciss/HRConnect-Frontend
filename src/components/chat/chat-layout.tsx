@@ -35,6 +35,7 @@ interface ChatLayoutProps {
   onExpand: () => void;
   setConversationId: (id: number | null) => void;
   refreshTrigger?: number; // Add refresh trigger prop
+   onNewChat?: () => void;
 }
 
 type Conversation = {
@@ -45,13 +46,8 @@ type Conversation = {
   user_id: number;
 };
 
-function getCookie(name: string) {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  if (match) return match[2];
-  return null;
-}
 
-export default function ChatLayout({ onExpand, setConversationId, refreshTrigger }: ChatLayoutProps) {
+export default function ChatLayout({ onExpand, setConversationId, refreshTrigger, onNewChat }: ChatLayoutProps) {
 
   const [history, setHistory] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,24 +58,8 @@ export default function ChatLayout({ onExpand, setConversationId, refreshTrigger
   
   const chatHistory = async () => {
     try {
-      const token = getCookie("auth_token");
+      const data = await api.history();
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/v1/chatbot/history`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
-      }
-
-      const data = await res.json();
       setHistory(data.conversations || []); // depends on your backend structure
       return data; // chat history response
     } catch (error) {
@@ -122,6 +102,11 @@ export default function ChatLayout({ onExpand, setConversationId, refreshTrigger
     // Clear localStorage first
     localStorage.removeItem("conversationId");
     localStorage.removeItem("chatMessages");
+    
+    // Call the parent's handleNewChat
+    if (onNewChat) {
+      onNewChat();
+    }
     
     // Set conversation ID to null - this will trigger the useEffect in ChatPage
     setConversationId(null);

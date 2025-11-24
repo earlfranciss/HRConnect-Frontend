@@ -24,6 +24,8 @@ export default function ChatPage() {
   const [refreshHistory, setRefreshHistory] = useState(0); // Add refresh trigger state
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const isNewChatClick = useRef(false);
+
   const {
     messages,
     conversationId,
@@ -46,11 +48,12 @@ export default function ChatPage() {
 
   // Clear input field and reset state for new chat
   useEffect(() => {
-    if (!conversationId) {
+    if (!conversationId && isNewChatClick.current) {
       setInputMessage("");
       setLastFetchedId(null);
       setLoading(false);
-      clearMessages(); // Clear messages when starting a new chat
+      clearMessages(); // Only clear when it's an intentional new chat
+      isNewChatClick.current = false; // Reset the flag
     }
   }, [conversationId, clearMessages]);
 
@@ -180,6 +183,15 @@ export default function ChatPage() {
     }
   };
 
+  const handleNewChat = () => {
+    isNewChatClick.current = true; // Set flag before clearing
+    clearMessages();
+    setConversationId(null);
+    setInputMessage("");
+    setLastFetchedId(null);
+    setLoading(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
       {/* Header */}
@@ -210,6 +222,7 @@ export default function ChatPage() {
             onExpand={() => setIsExpanded(!isExpanded)}
             setConversationId={setConversationId}
             refreshTrigger={refreshHistory} // Pass refresh trigger to ChatLayout
+            onNewChat={handleNewChat}
           />
         </div>
 

@@ -8,7 +8,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Bot, X, SquareArrowOutUpRight } from "lucide-react";
+import { Bot, X, SquareArrowOutUpRight, Maximize2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { api } from "@/services/api";
@@ -129,7 +129,7 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
           </div>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Link
             href={conversationId ? `/chat?id=${conversationId}` : "/chat"}
             className={`text-white opacity-80 hover:opacity-100 text-xl leading-none ${
@@ -137,7 +137,7 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
             }`}
             aria-label="Open fullscreen"
           >
-            <SquareArrowOutUpRight size={18} />
+            <Maximize2 size={16} />
           </Link>
 
           <button
