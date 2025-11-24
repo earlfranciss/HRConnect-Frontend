@@ -92,7 +92,7 @@ export default function LoginPage() {
                   }`}
                 required
               />
-              <p className="text-sm text-red-500 mt-1 h-4">{emailError}</p>
+              <p className="text-xs text-red-500 mt-1 h-4">{emailError}</p>
             </div>
 
             {/* PASSWORD FIELD */}
@@ -108,13 +108,13 @@ export default function LoginPage() {
                   }`}
                 required
               />
-              <p className="text-sm text-red-500 mt-1 h-4">{passwordError}</p>
+              <p className="text-xs text-red-500 mt-1 h-4">{passwordError}</p>
             </div>
           </div>
 
           {/* LOGIN ERROR */}
           {loginError && (
-            <p className="text-red-500 text-sm mt-1">{loginError}</p>
+            <p className="text-red-500 text-xs mt-1">{loginError}</p>
           )}
 
           <button

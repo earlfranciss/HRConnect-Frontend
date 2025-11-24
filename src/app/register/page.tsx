@@ -39,11 +39,26 @@ export default function RegisterPage() {
         if (!password.trim()) {
             setPasswordError("Password is required.");
             valid = false;
+        } else if (password.length < 8) {
+            setPasswordError("Password must be at least 8 characters long.");
+            valid = false;
+        } else if (!/[A-Z]/.test(password)) {
+            setPasswordError("Password must contain at least one uppercase letter.");
+            valid = false;
+        } else if (!/[a-z]/.test(password)) {
+            setPasswordError("Password must contain at least one lowercase letter.");
+            valid = false;
+        } else if (!/[0-9]/.test(password)) {
+            setPasswordError("Password must contain at least one number.");
+            valid = false;
+        } else if (!/[!/@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+            setPasswordError("Password must contain at least one special character (!/@#$%^&* etc.).");
+            valid = false;
         }
 
         // Confirm Password validation
         if (confirmPassword.trim() !== password.trim()) {
-            setConfirmPasswordError("Passwords doesn't match.");
+            setConfirmPasswordError("Passwords don't match.");
             valid = false;
         }
 
@@ -96,7 +111,7 @@ export default function RegisterPage() {
                                     }`}
                                 required
                             />
-                            <p className="text-sm text-red-500 mt-1 h-4">{emailError}</p>
+                            <p className="text-xs text-red-500 mt-1 h-4">{emailError}</p>
                         </div>
 
                         {/* PASSWORD FIELD */}
@@ -112,12 +127,12 @@ export default function RegisterPage() {
                                     }`}
                                 required
                             />
-                            <p className="text-sm text-red-500 mt-1 h-4">{passwordError}</p>
+                            <p className="text-xs text-red-500 mt-1 h-4">{passwordError}</p>
                         </div>
 
                         {/* CONFIRM PASSWORD FIELD */}
                         <div>
-                            <label className="block mb-1 font-medium text-black text-sm">Confirm Password:</label>
+                            <label className="block mb-1  font-medium text-black text-sm">Confirm Password:</label>
                             <input
                                 type="password"
                                 aria-label="Confirm Password"
@@ -128,13 +143,13 @@ export default function RegisterPage() {
                                     }`}
                                 required
                             />
-                            <p className="text-sm text-red-500 mt-1 h-4">{confirmPasswordError}</p>
+                            <p className="text-xs text-red-500 mt-1 h-4">{confirmPasswordError}</p>
                         </div>
                     </div>
 
                     {/* REGISTER ERROR */}
                     {registerError && (
-                        <p className="text-red-500 text-sm mt-1">{registerError}</p>
+                        <p className="text-red-500 text-xs mt-1">{registerError}</p>
                     )}
 
                     <button
