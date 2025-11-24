@@ -54,15 +54,17 @@ export default function LoginPage() {
         // Set cookie with proper options
         document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
 
-        // CHANGED: Redirect to /dashboard instead of /
         router.push("/dashboard");
         router.refresh(); // Force refresh to trigger middleware
       } else {
         setLoginError("Invalid email or password.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      setLoginError("Something went wrong. Try again.");
+
+      const message = error?.body?.detail || "Something went wrong. Try again.";
+
+      setLoginError(message);
     }
   };
 
@@ -122,11 +124,11 @@ export default function LoginPage() {
             Login
           </button>
         </form>
-        <p className="text-sm mt-6 text-gray-500">Don't have an account? 
+        <p className="text-sm mt-6 text-gray-500">Don't have an account?
           <Link
             href="/register"
             className="m-2 text-green-600">
-              Register
+            Register
           </Link>
         </p>
       </div>

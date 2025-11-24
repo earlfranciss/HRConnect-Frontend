@@ -58,23 +58,17 @@ export default function RegisterPage() {
         try {
             const data = await api.register({ email, password });
 
+            if (data) {
+                router.push("/login");
+                router.refresh();
+            }
 
-            router.push("/login");
-            router.refresh();
-
-            // if (data?.access_token) {
-            //     // Set cookie with proper options
-            //     // document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
-
-            //     // CHANGED: Redirect to /dashboard instead of /
-            //     router.push("/login");
-            //     router.refresh(); // Force refresh to trigger middleware
-            // } else {
-            //     setRegisterError("Invalid email or password.");
-            // }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Register error:", error);
-            setRegisterError("Something went wrong. Try again.");
+
+            const message = error?.body?.detail || "Something went wrong. Try again.";
+
+            setRegisterError(message);
         }
     };
 
