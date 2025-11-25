@@ -7,7 +7,6 @@ import { Bot, X, Settings, Trash, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import TextareaAutosize from "react-textarea-autosize";
-import ChatLayout from "@/components/chat/chat-layout";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
@@ -15,15 +14,18 @@ import { SuggestedPromptFull } from "@/components/chat/SuggestedPromptFull";
 import { api } from "@/services/api";
 import { Message, ChatStorage } from "@/utils/chat-storage";
 
+// Import mobile menu components
+import { MobileMenuProvider, MobileMenuButton, MobileMenuOverlay } from "@/components/chat/MobileMenuProvider";
+import ChatLayoutWrapper from "@/components/chat/ChatLayoutWrapper";
+
 export default function ChatPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [lastFetchedId, setLastFetchedId] = useState<number | null>(null);
-  const [refreshHistory, setRefreshHistory] = useState(0); // Add refresh trigger state
+  const [refreshHistory, setRefreshHistory] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const isNewChatClick = useRef(false);
 
   const {
@@ -52,15 +54,14 @@ export default function ChatPage() {
       setInputMessage("");
       setLastFetchedId(null);
       setLoading(false);
-      clearMessages(); // Only clear when it's an intentional new chat
-      isNewChatClick.current = false; // Reset the flag
+      clearMessages();
+      isNewChatClick.current = false;
     }
   }, [conversationId, clearMessages]);
 
   // Load messages for existing conversation
   useEffect(() => {
     const fetchExistingChat = async (id: number) => {
-      // If we already fetched this conversation, skip
       if (lastFetchedId === id) {
         return;
       }
@@ -68,14 +69,9 @@ export default function ChatPage() {
       try {
         setLoading(true);
         
-        // Check if we have messages from the SAME conversation in localStorage
         const storedConversationId = ChatStorage.getConversationId();
         const storedMessages = ChatStorage.getMessages();
         
-        // Only use localStorage if:
-        // 1. It's the same conversation
-        // 2. We haven't explicitly clicked to switch to it (lastFetchedId check above handles this)
-        // 3. It has messages
         if (storedConversationId === id && storedMessages.length > 0 && lastFetchedId === null) {
           setMessages(storedMessages);
           setLastFetchedId(id);
@@ -83,7 +79,6 @@ export default function ChatPage() {
           return;
         }
         
-        // Fetch from backend
         const data: any = await api.getConversation(id);
         
         const mappedMessages: Message[] = (data.messages || []).map((msg: any, idx: number) => {
@@ -137,10 +132,8 @@ export default function ChatPage() {
         const isNewConversation = conversationId !== data.conversation_id;
         
         setConversationId(data.conversation_id);
-        // Update lastFetchedId to prevent re-fetching
         setLastFetchedId(data.conversation_id);
         
-        // Trigger history refresh if this is a new conversation
         if (isNewConversation) {
           setRefreshHistory(prev => prev + 1);
         }
@@ -176,7 +169,6 @@ export default function ChatPage() {
       setConversationId(null);
       setLastFetchedId(null);
       router.push("/chat");
-      // Refresh history after deletion
       setRefreshHistory(prev => prev + 1);
     } catch (err) {
       console.error("Delete error:", err);
@@ -184,7 +176,7 @@ export default function ChatPage() {
   };
 
   const handleNewChat = () => {
-    isNewChatClick.current = true; // Set flag before clearing
+    isNewChatClick.current = true;
     clearMessages();
     setConversationId(null);
     setInputMessage("");
@@ -193,117 +185,123 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white shadow-md">
-        <div className="flex items-center gap-2">
-          <div className="bg-white p-2 rounded-full">
-            <Bot className="text-[#44B997]" size={22} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">HRConnect Aiva</h2>
-            <p className="text-xs opacity-80">Online</p>
-          </div>
-        </div>
-        <button
-          aria-label="Exit"
-          onClick={() => router.push("/dashboard")}
-          className="text-white hover:opacity-80"
-        >
-          <X size={24} />
-        </button>
-      </div>
+    <MobileMenuProvider>
+      <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
+        {/* Mobile Menu Button */}
+        <MobileMenuButton />
+        
+        {/* Mobile Menu Overlay */}
+        <MobileMenuOverlay />
 
-      {/* Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-64 flex flex-col h-full">
-          <ChatLayout
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 md:p-4 bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white shadow-md">
+          <div className="flex items-center gap-2 ml-12 md:ml-0">
+            <div className="bg-white p-1.5 md:p-2 rounded-full">
+              <Bot className="text-[#44B997] w-5 h-5 md:w-6 md:h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl font-bold">HRConnect Aiva</h2>
+              <p className="text-xs opacity-80">Online</p>
+            </div>
+          </div>
+          <button
+            aria-label="Exit"
+            onClick={() => router.push("/dashboard")}
+            className="text-white hover:opacity-80"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Layout */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar with mobile responsive wrapper */}
+          <ChatLayoutWrapper
             onExpand={() => setIsExpanded(!isExpanded)}
             setConversationId={setConversationId}
-            refreshTrigger={refreshHistory} // Pass refresh trigger to ChatLayout
+            refreshTrigger={refreshHistory}
             onNewChat={handleNewChat}
           />
-        </div>
 
-        {/* Chat Content */}
-        <div className="flex-1 flex flex-col bg-gray-50">
-          {/* Messages */}
-          <div
-            ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
-          >
-            {!loading && messages.length === 0 ? (
-              <ChatEmptyState 
-                title="Hello! I'm Aiva your assistant."
-              />
-            ) : (
-              <AnimatePresence initial={false}>
-                {messages.map((msg, i) => (
-                  <ChatMessage key={i} message={msg} showTime />
-                ))}
-              </AnimatePresence>
-            )}
-          </div>
-
-          {/* Suggested Prompts */}
-          {!loading && messages.length === 0 && (
-            <div className="px-6 py-3 flex justify-center">
-              <SuggestedPromptFull onPromptClick={handlePromptClick} maxHeight="300px" />
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="p-4 border-t bg-white">
-            <div className="flex items-end gap-2">
-              {conversationId && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button className="cursor-pointer bg-transparent hover:bg-transparent">
-                      <Settings className="text-black" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0 border-none">
-                    <Button
-                      className="cursor-pointer bg-red-400 hover:bg-red-500 text-white"
-                      onClick={() => handleDeleteChat(conversationId)}
-                    >
-                      <Trash className="mr-2" /> Delete
-                    </Button>
-                  </PopoverContent>
-                </Popover>
-              )}
-
-              <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
-                <TextareaAutosize
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && !isAiTyping) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder="Ask anything about HR..."
-                  minRows={1}
-                  maxRows={5}
-                  className="flex-1 border-none bg-transparent resize-none focus-visible:ring-0 text-sm p-1 text-[#1B2559] outline-none"
+          {/* Chat Content */}
+          <div className="flex-1 flex flex-col bg-gray-50 w-full md:w-auto">
+            {/* Messages */}
+            <div
+              ref={scrollRef}
+              className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            >
+              {!loading && messages.length === 0 ? (
+                <ChatEmptyState 
+                  title="Hello! I'm Aiva your assistant."
                 />
-              </div>
+              ) : (
+                <AnimatePresence initial={false}>
+                  {messages.map((msg, i) => (
+                    <ChatMessage key={i} message={msg} showTime />
+                  ))}
+                </AnimatePresence>
+              )}
+            </div>
 
-              <Button
-                onClick={() => handleSend()}
-                className={`bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] rounded-full p-3 ${
-                  isAiTyping ? "cursor-not-allowed pointer-events-none" : ""
-                }`}
-                disabled={isAiTyping}
-              >
-                <Send className="w-5 h-5" />
-              </Button>
+            {/* Suggested Prompts */}
+            {!loading && messages.length === 0 && (
+              <div className="px-4 md:px-6 py-3 flex justify-center">
+                <SuggestedPromptFull onPromptClick={handlePromptClick} maxHeight="300px" />
+              </div>
+            )}
+
+            {/* Input */}
+            <div className="p-3 md:p-4 border-t bg-white">
+              <div className="flex items-end gap-2">
+                {conversationId && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button className="cursor-pointer bg-transparent hover:bg-transparent p-2 md:p-3">
+                        <Settings className="text-black w-5 h-5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0 border-none">
+                      <Button
+                        className="cursor-pointer bg-red-400 hover:bg-red-500 text-white"
+                        onClick={() => handleDeleteChat(conversationId)}
+                      >
+                        <Trash className="mr-2 w-4 h-4" /> Delete
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                )}
+
+                <div className="flex items-center gap-2 w-full bg-gray-100 rounded-lg p-2">
+                  <TextareaAutosize
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey && !isAiTyping) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder="Ask anything about HR..."
+                    minRows={1}
+                    maxRows={5}
+                    className="flex-1 border-none bg-transparent resize-none focus-visible:ring-0 text-sm p-1 text-[#1B2559] outline-none"
+                  />
+                </div>
+
+                <Button
+                  onClick={() => handleSend()}
+                  className={`bg-linear-to-r from-[#44B997] to-[#4AADB9] hover:bg-[#3fa687] rounded-full p-2.5 md:p-3 ${
+                    isAiTyping ? "cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                  disabled={isAiTyping}
+                >
+                  <Send className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </MobileMenuProvider>
   );
 }
