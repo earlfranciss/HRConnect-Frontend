@@ -14,6 +14,7 @@ export default function RegisterPage() {
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
     const [registerError, setRegisterError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
 
@@ -70,6 +71,8 @@ export default function RegisterPage() {
 
         if (!validateInputs()) return;
 
+        setIsLoading(true);
+
         try {
             const data = await api.register({ email, password });
 
@@ -84,6 +87,8 @@ export default function RegisterPage() {
             const message = error?.body?.detail || "Something went wrong. Try again.";
 
             setRegisterError(message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -110,6 +115,7 @@ export default function RegisterPage() {
                                 className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${emailError ? "border-red-500" : ""
                                     }`}
                                 required
+                                disabled={isLoading}
                             />
                             <p className="text-xs text-red-500 mt-1 h-4">{emailError}</p>
                         </div>
@@ -126,6 +132,7 @@ export default function RegisterPage() {
                                 className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${passwordError ? "border-red-500" : ""
                                     }`}
                                 required
+                                disabled={isLoading}
                             />
                             <p className="text-xs text-red-500 mt-1 h-4">{passwordError}</p>
                         </div>
@@ -142,6 +149,7 @@ export default function RegisterPage() {
                                 className={`w-full border rounded-lg px-3 py-2.5 focus:outline-none text-black border-gray-300 ${confirmPasswordError ? "border-red-500" : ""
                                     }`}
                                 required
+                                disabled={isLoading}
                             />
                             <p className="text-xs text-red-500 mt-1 h-4">{confirmPasswordError}</p>
                         </div>
@@ -154,9 +162,36 @@ export default function RegisterPage() {
 
                     <button
                         type="submit"
-                        className="w-full bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-lg py-3 mt-6 cursor-pointer hover:bg-[#2c3e1a] transition-colors"
+                        disabled={isLoading}
+                        className="w-full bg-linear-to-r from-[#44B997] to-[#4AADB9] text-white rounded-lg py-3 mt-6 cursor-pointer hover:bg-[#2c3e1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
-                        Register
+                        {isLoading ? (
+                            <>
+                                <svg
+                                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                </svg>
+                                Registering...
+                            </>
+                        ) : (
+                            "Register"
+                        )}
                     </button>
                 </form>
 
