@@ -18,7 +18,6 @@ export default function DashboardPage() {
   const [show, setShow] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Remove auth check 
   useEffect(() => {
     const timer = setTimeout(() => setShow(false), 5000);
     return () => clearTimeout(timer);
@@ -26,11 +25,11 @@ export default function DashboardPage() {
 
   return (
     <main className="h-screen w-full bg-[#FDFDFD] overflow-y-auto">
-      <div className="w-full flex items-center justify-center flex-col gap-2">
+      <div className="w-full flex items-center justify-center flex-col gap-2 px-4 md:px-0">
         <Dashboard />
       </div>
 
-      <div className="absolute bottom-0 right-0 flex flex-col items-end justify-end mr-5">
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 flex flex-col items-end justify-end z-50">
         <AnimatePresence>
           {show && (
             <motion.div
@@ -38,10 +37,10 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 30 }}
               transition={{ duration: 0.6 }}
-              className="bg-white w-[300px] mb-4 p-6 rounded-xl rounded-br-none shadow-md"
+              className="bg-white w-[280px] sm:w-[300px] mb-4 p-4 sm:p-6 rounded-xl rounded-br-none shadow-md"
             >
-              <h1 className="text-xl font-bold mb-2">Welcome to HRConnect!</h1>
-              <p className="text-gray-400 text-sm">
+              <h1 className="text-lg sm:text-xl font-bold mb-2">Welcome to HRConnect!</h1>
+              <p className="text-gray-400 text-xs sm:text-sm">
                 Nice to meet you! If you have any question about services, feel
                 free to contact us.
               </p>
@@ -59,7 +58,7 @@ export default function DashboardPage() {
           >
             <Popover open={isOpen} onOpenChange={setIsOpen}>
               <PopoverTrigger asChild>
-                <Button className="w-16 h-16 relative mb-5 bg-linear-to-r from-[#44B997] to-[#4AADB9] rounded-full shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+                <Button className="w-14 h-14 sm:w-16 sm:h-16 relative bg-linear-to-r from-[#44B997] to-[#4AADB9] rounded-full shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                   <span className="absolute flex size-3 left-0 top-0 -ml-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex size-3 rounded-full bg-green-500"></span>
@@ -68,13 +67,13 @@ export default function DashboardPage() {
                     src="/img/chat-icon.png"
                     fill
                     alt="Chat Icon"
-                    className="object-contain p-4"
+                    className="object-contain p-3 sm:p-4"
                   />
                 </Button>
               </PopoverTrigger>
 
               <PopoverContent
-                className="p-0 w-[420px] h-[580px] flex flex-col mb-2 border-none shadow-xl rounded-2xl overflow-hidden bg-transparent"
+                className="p-0 w-[calc(100vw-2rem)] sm:w-[420px] h-[550px] sm:h-[580px] flex flex-col mb-2 border-none shadow-xl rounded-2xl overflow-hidden bg-transparent"
                 side="top"
                 align="end"
               >

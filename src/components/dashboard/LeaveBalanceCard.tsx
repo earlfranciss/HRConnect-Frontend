@@ -10,7 +10,6 @@ interface LeaveRequest {
     type: "Vacation Leave" | "Sick Leave" | "Emergency Leave" ;
 }
 
-
 export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: number }) {
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 
@@ -39,20 +38,19 @@ export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: n
         fetchLeaves();
     }, [refreshTrigger]);
 
-
     return (
-        <div className="bg-white rounded-lg border border-gray-200  p-[25px]">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-[25px]">
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2">
-                    <div className="size-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <File className="text-[#9BB7FF]" />
+                    <div className="size-8 sm:size-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <File className="text-[#9BB7FF] w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <h2 className="font-['Segoe_UI'] font-bold text-gray-900">Leave Balance</h2>
+                    <h2 className="font-['Segoe_UI'] font-bold text-sm sm:text-base text-gray-900">Leave Balance</h2>
                 </div>
             </div>
 
             {/* Leave Balance Cards */}
-            <div className="flex gap-4 w-full">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                 {leaveRequests.map((leave, i) => {
                     // Calculate remaining percentage for this leave
                     const remainingPercent = ((leave.total_days - leave.used_days) / leave.total_days) * 100;
@@ -66,12 +64,12 @@ export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: n
                                 : "bg-blue-500";
 
                     return (
-                        <div key={i} className="flex-1 p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 ">
+                        <div key={i} className="flex-1 p-3 sm:p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 sm:mb-0 last:mb-0">
                             <div className="flex justify-between gap-4 items-center mb-2">
-                                <span className="font-['Segoe_UI'] font-semibold text-sm text-gray-600">{leave.type}</span>
+                                <span className="font-['Segoe_UI'] font-semibold text-xs sm:text-sm text-gray-600">{leave.type}</span>
                                 <div>
-                                    <span className="font-['Segoe_UI'] font-bold text-[17.4px] text-gray-900">{leave.total_days - leave.used_days}</span>
-                                    <span className="font-['Segoe_UI'] font-semibold text-sm text-gray-500">/{leave.total_days}</span>
+                                    <span className="font-['Segoe_UI'] font-bold text-base sm:text-[17.4px] text-gray-900">{leave.total_days - leave.used_days}</span>
+                                    <span className="font-['Segoe_UI'] font-semibold text-xs sm:text-sm text-gray-500">/{leave.total_days}</span>
                                 </div>
                             </div>
                             <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">

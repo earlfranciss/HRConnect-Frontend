@@ -172,3 +172,136 @@ body {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+
+/* Critical Sidebar Visibility Fixes */
+/* Add this to your globals.css or import at the top of your layout */
+
+/* Ensure aside is always visible (override hidden md:flex) */
+aside {
+  display: flex !important;
+  background: linear-gradient(to bottom, #44B997, #4AADB9) !important;
+}
+
+/* Make parent containers transparent */
+aside + div,
+.flex.w-full.bg-white {
+  background: transparent !important;
+}
+
+/* Ensure sidebar content is visible */
+aside * {
+  color: white;
+}
+
+/* New Chat button should be visible */
+aside button {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure ScrollArea content is visible */
+aside .flex.flex-col.flex-1 {
+  display: flex !important;
+}
+
+/* Recent conversations text */
+aside h2 {
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Conversation items */
+aside .space-y-2 {
+  display: block !important;
+}
+
+/* Make sure all text is visible */
+aside span,
+aside p,
+aside h1,
+aside h2,
+aside h3 {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Icon visibility */
+aside svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Critical Sidebar Visibility Fixes */
+/* Add this to your globals.css or import at the top of your layout */
+
+/* Ensure aside is always visible (override hidden md:flex) */
+aside {
+  display: flex !important;
+  background: linear-gradient(to bottom, #44B997, #4AADB9) !important;
+}
+
+/* Make parent containers transparent */
+aside + div,
+.flex.w-full.bg-white {
+  background: transparent !important;
+}
+
+/* Ensure sidebar content is visible */
+aside * {
+  color: white;
+}
+
+/* New Chat button text should be black */
+aside button.bg-gray-100,
+aside button.bg-gray-100 *,
+aside button.text-black,
+aside button.text-black * {
+  color: black !important;
+}
+
+/* Ensure buttons are visible */
+aside button {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure ScrollArea content is visible */
+aside .flex.flex-col.flex-1 {
+  display: flex !important;
+}
+
+/* Recent conversations text */
+aside h2 {
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Conversation items */
+aside .space-y-2 {
+  display: block !important;
+}
+
+/* Make sure all text is visible */
+aside span,
+aside p,
+aside h1,
+aside h2,
+aside h3 {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Icon visibility */
+aside svg {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Conversation text should be white */
+aside .space-y-2 span,
+aside .space-y-2 button {
+  color: white !important;
+}
