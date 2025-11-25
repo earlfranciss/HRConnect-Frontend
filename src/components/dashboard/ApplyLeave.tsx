@@ -26,7 +26,6 @@ interface ApplyLeaveProps {
     onLeaveApplied?: () => void;
 }
 
-
 export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
     const [openType, setOpenType] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,44 +102,42 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
         }
     };
 
-
-
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             {/* Button to open dialog */}
             <DialogTrigger asChild>
-                <h2 className="text-xs">Apply for leave</h2>
+                <h2 className="text-xs sm:text-sm">Apply for leave</h2>
             </DialogTrigger>
 
-            <DialogContent>
+            <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-md">
                 <DialogHeader>
-                    <DialogTitle>File a Leave</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-base sm:text-lg">File a Leave</DialogTitle>
+                    <DialogDescription className="text-xs sm:text-sm">
                         Fill out the form below to submit your leave request.
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="grid gap-4">
+                <form onSubmit={handleSubmit} className="grid gap-3 sm:gap-4">
                     {/* Leave Type */}
-                    <div className="grid gap-3">
-                        <Label htmlFor="leave-type">Leave type</Label>
+                    <div className="grid gap-2 sm:gap-3">
+                        <Label htmlFor="leave-type" className="text-xs sm:text-sm">Leave type</Label>
                         <Popover open={openType} onOpenChange={setOpenType}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
                                     role="combobox"
                                     aria-expanded={openType}
-                                    className="w-[200px] justify-between"
+                                    className="w-full sm:w-[200px] justify-between text-xs sm:text-sm"
                                 >
                                     {value ? LEAVE_TYPES.find((lt) => lt.value === value)?.label : "Select type..."}
-                                    <ChevronsUpDown className="opacity-50" />
+                                    <ChevronsUpDown className="opacity-50 w-4 h-4" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[200px] p-0">
+                            <PopoverContent className="w-[calc(100vw-4rem)] sm:w-[200px] p-0">
                                 <Command>
-                                    <CommandInput placeholder="Search type..." className="h-9" />
+                                    <CommandInput placeholder="Search type..." className="h-8 sm:h-9 text-xs sm:text-sm" />
                                     <CommandList>
-                                        <CommandEmpty>No type found.</CommandEmpty>
+                                        <CommandEmpty className="text-xs sm:text-sm">No type found.</CommandEmpty>
                                         <CommandGroup>
                                             {LEAVE_TYPES.map((lt) => (
                                                 <CommandItem
@@ -150,9 +147,10 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
                                                         setValue(currentValue as LeaveType);
                                                         setOpenType(false);
                                                     }}
+                                                    className="text-xs sm:text-sm"
                                                 >
                                                     {lt.label}
-                                                    <Check className={cn("ml-auto", value === lt.value ? "opacity-100" : "opacity-0")} />
+                                                    <Check className={cn("ml-auto w-4 h-4", value === lt.value ? "opacity-100" : "opacity-0")} />
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -163,8 +161,8 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
                     </div>
 
                     {/* Number of Days */}
-                    <div className="grid gap-3">
-                        <Label htmlFor="no-of-days">Number of days</Label>
+                    <div className="grid gap-2 sm:gap-3">
+                        <Label htmlFor="no-of-days" className="text-xs sm:text-sm">Number of days</Label>
                         <Input
                             id="no-of-days"
                             type="number"
@@ -172,26 +170,32 @@ export default function ApplyLeave({ onLeaveApplied }: ApplyLeaveProps) {
                             min={1}
                             value={days}
                             onChange={(e) => setDays(Number(e.target.value))}
+                            className="text-xs sm:text-sm"
                         />
                     </div>
 
                     {/* Reason */}
-                    <div className="grid gap-3">
-                        <Label htmlFor="reason">Reason</Label>
+                    <div className="grid gap-2 sm:gap-3">
+                        <Label htmlFor="reason" className="text-xs sm:text-sm">Reason</Label>
                         <Textarea
                             id="reason"
                             placeholder="Type your reason here."
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
+                            className="text-xs sm:text-sm min-h-[80px] sm:min-h-[100px]"
                         />
                     </div>
 
                     {/* Form actions */}
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-0">
                         <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="outline" type="button" className="text-xs sm:text-sm">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" disabled={isSubmitting} className="bg-blue-500 hover:bg-blue-600 text-white">
+                        <Button 
+                            type="submit" 
+                            disabled={isSubmitting} 
+                            className="bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm"
+                        >
                             {isSubmitting ? "Submitting..." : "Apply Leave"}
                         </Button>
                     </DialogFooter>

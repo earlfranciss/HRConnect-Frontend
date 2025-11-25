@@ -42,36 +42,27 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
             .catch((err) => console.error("Failed to fetch user:", err));
     }, []);
 
-
     return (
-        <div>
+        <div className="w-full">
             {/* Top Bar - User Avatar and Settings buttons */}
-            <div className="flex justify-between items-center p-4">
+            <div className="flex justify-between items-center p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                    <Avatar>
+                    <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
                         <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
                         <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
-                    <div>
-                        <p className="font-semibold">{user?.email ?? "User"}</p>
-                        <p className="text-xs text-[#6C6767]">Software Engineer</p>
+                    <div className="min-w-0">
+                        <p className="font-semibold text-sm sm:text-base truncate">{user?.email ?? "User"}</p>
+                        <p className="text-xs text-[#6C6767] hidden sm:block">Software Engineer</p>
                     </div>
                 </div>
-                <div className="flex gap-4 ">
-                    {/* Notifications */}
-                    {/* <Popover>
-                        <PopoverTrigger>
-                            <Bell size={18} />
-                        </PopoverTrigger>
-                        <PopoverContent className="">Notifications</PopoverContent>
-                    </Popover> */}
-
+                <div className="flex gap-3 sm:gap-4">
                     {/* Settings */}
                     <DropdownMenu>
                         <DropdownMenuTrigger className="cursor-pointer">
-                            <Settings size={18} />
+                            <Settings size={18} className="sm:w-5 sm:h-5" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent >
+                        <DropdownMenuContent align="end">
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem><Link href="/chat">Chatbot</Link></DropdownMenuItem>
@@ -84,16 +75,15 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
             <Separator />
             
             {/* Welcome Message and Apply for Leave button */}
-            <div className="flex justify-between items-center ">
-                <div className="justify-start p-4">
-                    <p className="text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
-                    <p className="text-xs text-[#6C6767]">Here's what's happening with your work today</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 p-3 sm:p-4">
+                <div className="justify-start">
+                    <p className="text-base sm:text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
+                    <p className="text-xs text-[#6C6767] mt-1">Here's what's happening with your work today</p>
                 </div>
-                <Button className="bg-blue-500 hover:bg-blue-600">
+                <Button className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto whitespace-nowrap">
                     <ApplyLeave onLeaveApplied={onLeaveApplied} />
                 </Button>
             </div>
         </div>
-
     )
 }
