@@ -11,22 +11,18 @@ export function AuthChecker() {
     // Skip auth check for public routes
     const publicRoutes = ["/", "/login", "/register"];
     if (publicRoutes.includes(pathname)) {
-      console.log("Public route, skipping auth check");
+      // console.log("✅ Public route, skipping auth check");
       return;
     }
 
     const checkAuth = () => {
-      const cookies = document.cookie.split(";");
-      const authCookie = cookies.find((cookie) =>
-        cookie.trim().startsWith("auth_token=")
-      );
-      const token = authCookie?.split("=")[1];
+      // Check localStorage
+      const token = localStorage.getItem("auth_token");
 
       if (!token) {
-        console.log("⚠️ No auth token, redirecting to /login");
         router.push("/login");
         router.refresh();
-      }
+      } 
     };
 
     checkAuth(); // Check immediately
