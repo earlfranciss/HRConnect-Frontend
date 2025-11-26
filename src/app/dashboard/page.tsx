@@ -13,6 +13,7 @@ import {
 
 import ChatWidget from "@/components/chatwidget/chat-widget";
 import Dashboard from "@/components/dashboard/dashboard";
+import SessionMonitor from "@/utils/session-monitor";
 
 export default function DashboardPage() {
   const [show, setShow] = useState(true);
@@ -25,6 +26,9 @@ export default function DashboardPage() {
 
   return (
     <main className="h-screen w-full bg-[#FDFDFD] overflow-y-auto">
+      {/* Session Monitor Component */}
+      <SessionMonitor />
+      
       <div className="w-full flex items-center justify-center flex-col gap-2 px-4 md:px-0">
         <Dashboard />
       </div>

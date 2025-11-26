@@ -54,7 +54,10 @@ export default function LoginPage() {
       const data = await api.login({ email, password });
 
       if (data?.access_token) {
-        // Set cookie with proper options
+        // Clear any existing token first
+        document.cookie = "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+        
+        // Set new cookie with proper options
         document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
 
         router.push("/dashboard");
@@ -65,9 +68,14 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
 
-      const message = error?.body?.detail || "Something went wrong. Try again.";
-
-      setLoginError(message);
+      // Handle specific error messages
+      const errorDetail = error?.body?.detail || error?.message || "Something went wrong. Try again.";
+      
+      if (errorDetail.includes("Another device") || errorDetail.includes("Session expired")) {
+        setLoginError("This account is now logged in on this device. Any other active sessions have been terminated.");
+      } else {
+        setLoginError(errorDetail);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +129,7 @@ export default function LoginPage() {
 
           {/* LOGIN ERROR */}
           {loginError && (
-            <p className="text-red-500 text-xs mt-1">{loginError}</p>
+            <p className="text-red-500 text-xs mt-1 text-center">{loginError}</p>
           )}
 
           <button
