@@ -1,21 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { File, } from "lucide-react";
+import { File } from "lucide-react";
 import { api } from "@/services/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LeaveRequest {
     total_days: number;
     used_days: number;
-    type: "Vacation Leave" | "Sick Leave" | "Emergency Leave" ;
+    type: "Vacation Leave" | "Sick Leave" | "Emergency Leave";
 }
 
 export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: number }) {
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Fetch all leave balance
     useEffect(() => {
         async function fetchLeaves() {
+            setIsLoading(true);
             try {
                 const [vacation, sick, emergency] = await Promise.all([
                     api.getVacationLeave(),
@@ -32,6 +35,8 @@ export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: n
                 setLeaveRequests(leaves);
             } catch (err) {
                 console.error("Failed to fetch leave requests:", err);
+            } finally {
+                setIsLoading(false);
             }
         }
 
@@ -42,46 +47,72 @@ export default function LeaveBalanceCard({ refreshTrigger }: { refreshTrigger: n
         <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-[25px]">
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2">
-                    <div className="size-8 sm:size-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <File className="text-[#9BB7FF] w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <h2 className="font-['Segoe_UI'] font-bold text-sm sm:text-base text-gray-900">Leave Balance</h2>
+                    {isLoading ? (
+                        // Skeleton Loading State
+                        <>
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-5 w-25 rounded-md" />
+                        </>
+                    ) : (
+                        <>
+                            <div className="size-8 sm:size-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                                <File className="text-[#9BB7FF] w-4 h-4 sm:w-5 sm:h-5" />
+                            </div>
+                            <h2 className="font-['Segoe_UI'] font-bold text-sm sm:text-base text-gray-900">Leave Balance</h2>
+                        </>
+                    )}
                 </div>
             </div>
 
             {/* Leave Balance Cards */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
-                {leaveRequests.map((leave, i) => {
-                    // Calculate remaining percentage for this leave
-                    const remainingPercent = ((leave.total_days - leave.used_days) / leave.total_days) * 100;
+                {isLoading ? (
+                    // Skeleton Loading State
+                    <>
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="flex flex-col flex-1 justify-between p-3 sm:p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 sm:mb-0 last:mb-0">
+                                <div className="flex justify-between gap-4 items-start mb-2">
+                                    <Skeleton className="h-4 w-24 rounded-md" />
+                                    <Skeleton className="h-5 w-12 rounded-md" />
+                                </div>
+                                <Skeleton className="h-1.5 w-full rounded-full" />
+                            </div>
+                        ))}
+                    </>
+                ) : (
+                    // Actual Leave Balance Cards
+                    leaveRequests.map((leave, i) => {
+                        // Calculate remaining percentage for this leave
+                        const remainingPercent = ((leave.total_days - leave.used_days) / leave.total_days) * 100;
 
-                    // Determine color based on remaining percent
-                    const barColor =
-                        remainingPercent < 20
-                            ? "bg-red-500"
-                            : remainingPercent < 60
-                                ? "bg-orange-500"
-                                : "bg-blue-500";
+                        // Determine color based on remaining percent
+                        const barColor =
+                            remainingPercent < 20
+                                ? "bg-red-500"
+                                : remainingPercent < 60
+                                    ? "bg-orange-500"
+                                    : "bg-blue-500";
 
-                    return (
-                        <div key={i} className="flex flex-col flex-1 justify-between p-3 sm:p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 sm:mb-0 last:mb-0">
-                            <div className="flex justify-between gap-4 items-start mb-2">
-                                <span className="font-['Segoe_UI'] font-semibold text-xs sm:text-sm text-gray-600">{leave.type}</span>
-                                <div>
-                                    <span className="font-['Segoe_UI'] font-bold text-base sm:text-[17.4px] text-gray-900">{leave.total_days - leave.used_days}</span>
-                                    <span className="font-['Segoe_UI'] font-semibold text-xs sm:text-sm text-gray-500">/{leave.total_days}</span>
+                        return (
+                            <div key={i} className="flex flex-col flex-1 justify-between p-3 sm:p-[13px] bg-gray-50 border border-gray-100 rounded-lg mb-3 sm:mb-0 last:mb-0">
+                                <div className="flex justify-between gap-4 items-start mb-2">
+                                    <span className="font-['Segoe_UI'] font-semibold text-xs sm:text-sm text-gray-600">{leave.type}</span>
+                                    <div>
+                                        <span className="font-['Segoe_UI'] font-bold text-base sm:text-[17.4px] text-gray-900">{leave.total_days - leave.used_days}</span>
+                                        <span className="font-['Segoe_UI'] font-semibold text-xs sm:text-sm text-gray-500">/{leave.total_days}</span>
+                                    </div>
+                                </div>
+                                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full ${barColor}`}
+                                        style={{ width: `${remainingPercent}%` }}
+                                    />
                                 </div>
                             </div>
-                            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full ${barColor}`}
-                                    style={{ width: `${remainingPercent}%` }}
-                                />
-                            </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })
+                )}
             </div>
         </div>
-    )
+    );
 }
