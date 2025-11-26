@@ -71,7 +71,19 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen)
+  const [_open, _setOpen] = React.useState(() => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(SIDEBAR_COOKIE_NAME);
+      return saved !== null ? saved === 'true' : defaultOpen;
+    } catch {
+      return defaultOpen;
+    }
+  }
+  return defaultOpen;
+});
+
+
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -83,7 +95,13 @@ function SidebarProvider({
       }
 
       // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
+        } catch (e) {
+          console.warn('Could not save sidebar state:', e);
+        }
+      }
     },
     [setOpenProp, open]
   )
@@ -569,7 +587,7 @@ function SidebarMenuAction({
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
         showOnHover &&
-          "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
+        "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
         className
       )}
       {...props}

@@ -4,13 +4,45 @@ interface HttpOptions extends RequestInit {
   headers?: Record<string, string>;
 }
 
-function getCookie(name: string) {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : null;
+// ✅ Get token from localStorage
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const token = localStorage.getItem('auth_token');
+    return token;
+  } catch (e) {
+    console.warn('Could not access localStorage:', e);
+    return null;
+  }
+}
+
+// ✅ Set token in localStorage
+function setToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem('auth_token', token);
+  } catch (e) {
+    console.error('Could not save token to localStorage:', e);
+  }
+}
+
+// ✅ Clear token from localStorage
+function clearToken(): void {
+  if (typeof window === 'undefined') return;
+    
+  try {
+    localStorage.removeItem('auth_token');
+    sessionStorage.clear();
+  } catch (e) {
+    console.warn('Could not clear storage:', e);
+  }
 }
 
 async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T | null> {
-  const token = getCookie("auth_token");
+  // ✅ Get fresh token for every request
+  const token = getToken();
 
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
@@ -18,7 +50,7 @@ async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
-    credentials: 'include',
+    cache: 'no-store',
     ...options,
   });
 
@@ -37,6 +69,7 @@ async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T
     }
 
     const errorMessage =
+      (errorBody && (errorBody as any).detail) ||
       (errorBody && (errorBody as any).message) ||
       (typeof errorBody === "string" ? errorBody : null) ||
       "API Error";
@@ -45,27 +78,78 @@ async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T
     error.status = res.status;
     error.statusText = res.statusText;
     error.body = errorBody;
+
+    // ✅ Auto-clear token on 401 Unauthorized
+    if (res.status === 401) {
+      console.error('❌ 401 Unauthorized - Clearing token');
+      clearToken();
+    }
+
     throw error;
   }
 
   return res.status === 204 ? ({} as T) : res.json();
 }
 
-
-
 export const api = {
   // --- Auth ---
-  login: (credentials: { email: string; password: string }) =>
-    http("/v1/auth/login", { method: "POST", body: JSON.stringify(credentials) }),
-  logout: async () =>
-    http("/v1/auth/logout", {
-      method: "POST",
-    })
-  ,
+  login: async (credentials: { email: string; password: string }) => {
+    try {
+      const result = await http("/v1/auth/login", { 
+        method: "POST", 
+        body: JSON.stringify(credentials) 
+      });
+      
+      if (result?.access_token) {
+        // ✅ Save token to localStorage
+        setToken(result.access_token);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Login failed:', error);
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    try {
+      const result = await http("/v1/auth/logout", {
+        method: "POST",
+      });
+      
+      clearToken();
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Logout failed, but clearing token anyway');
+      clearToken();
+      throw error;
+    }
+  },
+
   register: (credentials: { email: string; password: string }) =>
     http("/v1/auth/register", { method: "POST", body: JSON.stringify(credentials) }),
-  validate: () =>
-    http<{ email: string }>("/v1/auth/me", { method: "GET" }),
+
+  validate: async () => {
+    const token = getToken();
+    
+    if (!token) {
+      console.log('❌ No token found for validation');
+      throw { status: 401, body: { detail: 'No token' } };
+    }
+    
+    try {
+      const result = await http<{ email: string; user_id: number }>("/v1/auth/me", { 
+        method: "GET" 
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Validation failed:', error);
+      throw error;
+    }
+  },
 
   // --- Chatbot ---
   query: (question: string, conversation_id?: number) =>

@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import { ChatStorage } from "@/utils/chat-storage";
+import { toast } from "sonner";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -15,18 +15,29 @@ export default function LogoutButton() {
     try {
       await api.logout();
 
-      // Clear token cookie and localStorage
-      document.cookie = "auth_token=; path=/; max-age=0";
+      // Clear localStorage and sessionStorage
       localStorage.removeItem("auth_token");
+      sessionStorage.clear();
 
       // Clear chat storage on logout
       ChatStorage.clear();
       sessionStorage.removeItem("chatInitialized");
 
-      console.log("Logged out successfully");
+      toast.success("Logged out successfully");
+      
       router.push("/login");
+      router.refresh();
     } catch (err) {
-      console.error("Logout failed", err);
+      console.error("❌ Logout failed:", err);
+      
+      // Still clear local storage even if API call fails
+      localStorage.removeItem("auth_token");
+      sessionStorage.clear();
+      ChatStorage.clear();
+      
+      toast.error("Logout failed, but cleared local session");
+      router.push("/login");
+      router.refresh();
     } finally {
       setLoading(false);
     }
@@ -36,7 +47,7 @@ export default function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="cursor-pointer text-red-500 bg-transparent p-0!"
+      className="cursor-pointer text-red-500 bg-transparent p-0 w-full text-left"
     >
       {loading ? "Logging out..." : "Logout"}
     </button>

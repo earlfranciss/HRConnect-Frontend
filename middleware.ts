@@ -1,61 +1,33 @@
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-
-async function verifyToken(token: string): Promise<boolean> {
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    await jwtVerify(token, secret);
-    return true;
-  } catch (error) {
-    console.error("Token verification failed:", error);
-    return false;
-  }
-}
 
 export async function middleware(req: NextRequest) {
-  const token = req.cookies.get("auth_token")?.value;
   const pathname = req.nextUrl.pathname;
 
-  console.log("🔍 Middleware executed for:", pathname, "| Token exists:", !!token);
+  // console.log("🔍 Middleware executed for:", pathname);
 
-  // ROOT (/) → public landing page, allow access for everyone
-  if (pathname === "/") {
-    console.log("➡️ Allowing access to public landing page");
+  // Public routes - allow access
+  if (pathname === "/" || pathname === "/register") {
+    // console.log("➡️ Allowing access to public route");
     return NextResponse.next();
   }
 
-  // LOGIN page → redirect if token valid
+  // Login page - allow access
   if (pathname === "/login") {
-    if (token) {
-      const isValid = await verifyToken(token);
-      if (isValid) {
-        console.log("✅ Already authenticated, redirecting to /dashboard");
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      }
-    }
-    console.log("➡️ Allowing access to /login");
+    // console.log("➡️ Allowing access to /login");
     return NextResponse.next();
   }
 
-  // DASHBOARD → protect
+  // Protected routes - let client-side handle auth
+  // Since we're using localStorage, middleware can't check it
+  // SessionMonitor and AuthChecker will handle authentication on client-side
   if (pathname.startsWith("/dashboard")) {
-    if (!token) {
-      console.log("❌ No token for dashboard, redirecting to /login");
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-    
-    const isValid = await verifyToken(token);
-    if (!isValid) {
-      console.log("❌ Invalid token, redirecting to /login");
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-    
-    console.log("✅ Token valid, allowing dashboard access");
+    // console.log("➡️ Protected route, client-side will validate");
     return NextResponse.next();
   }
 
-  console.log("➡️ Allowing request to pass through");
+  // console.log("➡️ Allowing request to pass through");
   return NextResponse.next();
 }
 

@@ -51,29 +51,38 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // ✅ Clear all storage first
+      localStorage.clear();
+      sessionStorage.clear();
+
       const data = await api.login({ email, password });
 
       if (data?.access_token) {
-        // Clear any existing token first
-        document.cookie = "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-        
-        // Set new cookie with proper options
-        document.cookie = `auth_token=${data.access_token}; Path=/; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
-
+        // ✅ Navigate to dashboard
         router.push("/dashboard");
-        router.refresh(); // Force refresh to trigger middleware
+        router.refresh();
       } else {
         setLoginError("Invalid email or password.");
       }
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("❌ Login error:", error);
 
-      // Handle specific error messages
       const errorDetail = error?.body?.detail || error?.message || "Something went wrong. Try again.";
-      
-      if (errorDetail.includes("Another device") || errorDetail.includes("Session expired")) {
+
+      // Handle "already logged in" error (403 from your backend)
+      if (error?.status === 403 || errorDetail.includes("already logged in")) {
+        setLoginError("This account is currently logged in on another device. Please logout from that device first or contact support.");
+      }
+      // Handle session expired
+      else if (errorDetail.includes("Another device") || errorDetail.includes("Session expired")) {
         setLoginError("This account is now logged in on this device. Any other active sessions have been terminated.");
-      } else {
+      }
+      // Handle invalid credentials
+      else if (error?.status === 401) {
+        setLoginError("Invalid email or password.");
+      }
+      // Generic error
+      else {
         setLoginError(errorDetail);
       }
     } finally {
@@ -166,10 +175,9 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-        <p className="text-sm mt-6 text-gray-500">Don't have an account?
-          <Link
-            href="/register"
-            className="m-2 text-green-600">
+        <p className="text-sm mt-6 text-gray-500">
+          Don't have an account?
+          <Link href="/register" className="m-2 text-green-600">
             Register
           </Link>
         </p>
