@@ -15,18 +15,32 @@ import ChatWidget from "@/components/chatwidget/chat-widget";
 import Dashboard from "@/components/dashboard/dashboard";
 import SessionMonitor from "@/utils/session-monitor";
 
+// ✅ REMOVE these lines - they don't work in client components
+// export const dynamic = 'force-dynamic';
+// export const revalidate = 0;
+
 export default function DashboardPage() {
   const [show, setShow] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // ✅ Prevent SSR hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setShow(false), 5000);
     return () => clearTimeout(timer);
   }, []);
 
+  // ✅ Don't render until client-side mounted
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <main className="h-screen w-full bg-[#FDFDFD] overflow-y-auto">
-      {/* Session Monitor Component */}
       <SessionMonitor />
       
       <div className="w-full flex items-center justify-center flex-col gap-2 px-4 md:px-0">
