@@ -40,13 +40,70 @@ function clearToken(): void {
   }
 }
 
+// async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T | null> {
+//   // ✅ Get fresh token for every request
+//   const token = getToken();
+
+//   const res = await fetch(`${BASE_URL}${path}`, {
+//     headers: {
+//       "Content-Type": "application/json",
+//       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+//       ...(options.headers || {}),
+//     },
+//     cache: 'no-store',
+//     ...options,
+//   });
+
+//   const resClone = res.clone();
+
+//   if (!res.ok) {
+//     let errorBody;
+//     try {
+//       errorBody = await res.json();
+//     } catch {
+//       try {
+//         errorBody = await resClone.text();
+//       } catch {
+//         errorBody = null;
+//       }
+//     }
+
+//     const errorMessage =
+//       (errorBody && (errorBody as any).detail) ||
+//       (errorBody && (errorBody as any).message) ||
+//       (typeof errorBody === "string" ? errorBody : null) ||
+//       "API Error";
+
+//     const error = new Error(errorMessage) as any;
+//     error.status = res.status;
+//     error.statusText = res.statusText;
+//     error.body = errorBody;
+
+//     // ✅ Auto-clear token on 401 Unauthorized
+//     if (res.status === 401) {
+//       console.error('❌ 401 Unauthorized - Clearing token');
+//       clearToken();
+//     }
+
+//     throw error;
+//   }
+
+//   return res.status === 204 ? ({} as T) : res.json();
+// }
 async function http<T = any>(path: string, options: HttpOptions = {}): Promise<T | null> {
   // ✅ Get fresh token for every request
   const token = getToken();
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  // ✅ Add cache buster to EVERY request
+  const cacheBuster = `_t=${Date.now()}&_r=${Math.random().toString(36).substring(7)}`;
+  const separator = path.includes('?') ? '&' : '?';
+  const urlWithCacheBuster = `${BASE_URL}${path}${separator}${cacheBuster}`;
+
+  const res = await fetch(urlWithCacheBuster, {
     headers: {
       "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },

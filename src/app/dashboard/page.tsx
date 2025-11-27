@@ -19,6 +19,11 @@ import SessionMonitor from "@/utils/session-monitor";
 // export const dynamic = 'force-dynamic';
 // export const revalidate = 0;
 
+// ✅ Add these exports at the TOP of the file
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 export default function DashboardPage() {
   const [show, setShow] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
