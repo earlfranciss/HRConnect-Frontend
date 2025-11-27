@@ -26,6 +26,7 @@ import { Button } from "../ui/button";
 
 interface User {
     email: string;
+    user_id: number;
     [key: string]: any;
 }
 
@@ -36,29 +37,72 @@ interface UserHeaderProps {
 export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [renderKey, setRenderKey] = useState(0);
 
     useEffect(() => {
         async function fetchUser() {
+            // ✅ Clear user state immediately
+            setUser(null);
             setIsLoading(true);
+            
             try {
-                // Add minimum loading time with Promise.all
-                const [userData] = await Promise.all([
-                    api.validate(),
-                    new Promise(resolve => setTimeout(resolve, 800)) // Minimum 800ms loading time
-                ]);
+                const userData = await api.validate();
+                
+                // ✅ Log what we received
+                console.log('🔍 Frontend UserHeader received:', {
+                    user_id: userData?.user_id,
+                    email: userData?.email
+                });
+                
+                // ✅ Verify token matches received data
+                const token = localStorage.getItem('auth_token');
+                if (token) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        console.log('🎫 Token says:', {
+                            user_id: payload.user_id,
+                            email: payload.email
+                        });
+                        
+                        // ✅ Check for mismatch
+                        if (payload.user_id !== userData?.user_id) {
+                            console.error('🚨 MISMATCH DETECTED!');
+                            console.error('Token user_id:', payload.user_id);
+                            console.error('API returned user_id:', userData?.user_id);
+                            
+                            // Clear everything and force re-login
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            window.location.href = '/login';
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Failed to decode token:', e);
+                    }
+                }
+                
+                // ✅ Force a small delay to ensure state clears
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 setUser(userData);
+                setRenderKey(prev => prev + 1); // ✅ Force re-render
+                
             } catch (err) {
-                console.error("Failed to fetch user:", err);
+                console.error("❌ Failed to fetch user:", err);
+                setUser(null);
+                // Redirect to login
+                window.location.href = '/login';
             } finally {
                 setIsLoading(false);
             }
         }
 
         fetchUser();
-    }, []);
+    }, []); // Runs on mount
 
+    // ✅ Add key to force complete re-render when user changes
     return (
-        <div className="w-full">
+        <div className="w-full" key={`user-header-${user?.user_id || 'loading'}-${renderKey}`}>
             {/* Top Bar - User Avatar and Settings buttons */}
             <div className="flex justify-between items-center p-3 sm:p-4">
                 <div className="flex items-center gap-2">
@@ -77,8 +121,12 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
                                 <AvatarFallback>CN</AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
-                                <p className="font-semibold text-sm sm:text-base truncate">{user?.email ?? "User"}</p>
-                                <p className="text-xs text-[#6C6767] hidden sm:block">Software Engineer</p>
+                                <p className="font-semibold text-sm sm:text-base truncate">
+                                    {user?.email ?? "User"}
+                                </p>
+                                <p className="text-xs text-gray-600 hidden sm:block">
+                                    ID: {user?.user_id}
+                                </p>
                             </div>
                         </>
                     )}
@@ -114,8 +162,12 @@ export default function UserHeader({ onLeaveApplied }: UserHeaderProps) {
                 ) : (
                     <>
                         <div className="justify-start">
-                            <p className="text-base sm:text-lg font-semibold">Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋</p>
-                            <p className="text-xs text-[#6C6767] mt-1">Here's what's happening with your work today</p>
+                            <p className="text-base sm:text-lg font-semibold">
+                                Welcome back, {user?.email?.split("@")[0] ?? "User"}! 👋
+                            </p>
+                            <p className="text-xs text-[#6C6767] mt-1">
+                                Here's what's happening with your work today
+                            </p>
                         </div>
                         <Button className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto whitespace-nowrap">
                             <ApplyLeave onLeaveApplied={onLeaveApplied} />

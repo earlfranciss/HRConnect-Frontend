@@ -56,44 +56,52 @@ export default function LoginPage() {
 
       const data = await api.login({ email, password });
 
+      // Replace this section in handleLogin:
+
       if (data?.access_token) {
-        
         // Wait a moment for localStorage to complete
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         // ✅ VERIFY: Check what token was actually saved
         const savedToken = localStorage.getItem('auth_token');
-        
+
         if (!savedToken) {
           throw new Error('Token was not saved properly');
         }
-        
+
         // ✅ DECODE: Verify the token belongs to the correct user
         try {
           const payload = JSON.parse(atob(savedToken.split('.')[1]));
-          
+
+          console.log('✅ Login successful for:', payload.email);
+          console.log('✅ Token user_id:', payload.user_id);
+
           // ✅ VALIDATE: Check if token email matches login email
-          if (payload.email.toLowerCase() !== email.toLowerCase()) {            
+          if (payload.email.toLowerCase() !== email.toLowerCase()) {
             // Clear everything and show error
             localStorage.clear();
             sessionStorage.clear();
             throw new Error('Token verification failed: Email mismatch');
           }
-                    
+
+          // ✅ Use hard reload instead of router.push()
+          window.location.href = '/dashboard';
+
         } catch (decodeError) {
           localStorage.clear();
           sessionStorage.clear();
           throw new Error('Invalid token format');
         }
-        
+
+
         router.push("/dashboard");
         router.refresh();
-        
+
       } else {
         console.error('❌ No access token in response');
         setLoginError("Invalid email or password.");
       }
-      
+
     } catch (error: any) {
       console.error("❌ Login error:", error);
 
